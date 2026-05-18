@@ -1,24 +1,25 @@
-import logo from './logo.svg';
-import './App.css';
+import { Box, Flex } from '@chakra-ui/react';
+import { Routes, Route } from 'react-router-dom';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import Home from './pages/Home';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Flex direction="column" minH="100vh" bg="brand.cream">
+      <Header />
+      <Box as="main" flex="1">
+        <Routes>
+          <Route path="/" element={<Home/>} />
+          {/* Aquí agregaremos más páginas después:
+              <Route path="/catalogo" element={<Catalogo />} />
+              <Route path="/producto/:slug" element={<Producto />} />
+              <Route path="/carrito" element={<Carrito />} />
+          */}
+        </Routes>
+      </Box>
+      <Footer />
+    </Flex>
   );
 }
 
