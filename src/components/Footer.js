@@ -1,4 +1,7 @@
 import { Box, Flex, HStack, Text, Link } from '@chakra-ui/react';
+import { CiInstagram, CiFacebook } from "react-icons/ci";
+import { FaTiktok } from "react-icons/fa";
+
 
 function Footer() {
   return (
@@ -18,13 +21,13 @@ function Footer() {
         </Text>
         <HStack gap={5}>
           <Link href="#" color="brand.purpleLight" _hover={{ color: 'white' }} fontSize="sm" fontWeight="600">
-            📷 Instagram
+            <Box as={CiInstagram} boxSize="30px" cursor="pointer" _hover={{ color: 'brand.pink' }} />
           </Link>
           <Link href="#" color="brand.purpleLight" _hover={{ color: 'white' }} fontSize="sm" fontWeight="600">
-            👍 Facebook
+            <Box as={CiFacebook} boxSize="30px" cursor="pointer" _hover={{ color: 'brand.pink' }} />
           </Link>
           <Link href="#" color="brand.purpleLight" _hover={{ color: 'white' }} fontSize="sm" fontWeight="600">
-            🎵 TikTok
+            <Box as={FaTiktok} boxSize='30px' cursor='pointer' _hobver={{ color: 'brand.pink' }} />
           </Link>
         </HStack>
       </Flex>

@@ -48,7 +48,7 @@ function Header() {
               letterSpacing="-0.3px"
               display={{ base: 'none', sm: 'block' }}
             >
-              La Perroboutique
+              La PerroBoutique
             </Text>
           </HStack>
         </ChakraLink>
