@@ -1,7 +1,10 @@
-import { Box, Text, Stack, AspectRatio } from '@chakra-ui/react';
+import { Box, Text, Stack, AspectRatio, Image } from '@chakra-ui/react';
+import { formatPriceRange } from '../utils/format';
 
 // Recibe un objeto "product" como prop y muestra una tarjetita.
 function ProductCard({ product }) {
+  const hasImage = product.image_urls && product.image_urls.length > 0;
+  const firstImage = hasImage ? product.image_urls[0] : null;
   return (
     <Box
       bg="white"
@@ -12,7 +15,6 @@ function ProductCard({ product }) {
       transition="all 0.2s ease"
       _hover={{ transform: 'translateY(-4px)', boxShadow: '0 8px 24px rgba(107, 46, 171, 0.12)' }}
     >
-      {/* Badge "NUEVO" si product.isNew es true */}
       {product.isNew && (
         <Box
           position="absolute"
@@ -34,14 +36,20 @@ function ProductCard({ product }) {
 
       <AspectRatio ratio={1} mb={3}>
         <Box
-          bg={product.bgColor || 'brand.mintLight'}
+          bg="brand.mintLight"
           borderRadius="14px"
           display="flex"
           alignItems="center"
           justifyContent="center"
           fontSize="80px"
+          overflow="hidden"
         >
-          {product.emoji}
+          {firstImage ? (
+            <Image src={firstImage} alt={product.name} w="full" h="full" objectFit="cover" />
+            ) : (
+            // Placeholder mientras no haya foto real
+            '🐾'
+          )}
         </Box>
       </AspectRatio>
 
@@ -50,7 +58,7 @@ function ProductCard({ product }) {
           {product.name}
         </Text>
         <Text fontSize="sm" color="brand.pink" fontWeight="700">
-          ${product.price.toLocaleString('es-MX')} MXN
+          {formatPriceRange(product.product_variants)}
         </Text>
       </Stack>
     </Box>

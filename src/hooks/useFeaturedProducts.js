@@ -7,7 +7,7 @@ export function useFeaturedProducts(){
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        async function fectchProducts(){
+        async function fetchProducts(){
             const { data, error } = await supabase
             .from('products')
             .select(`
@@ -31,7 +31,7 @@ export function useFeaturedProducts(){
             } else {
                 setProducts(data);
             }
-            setLoaging(false);
+            setLoading(false);
         }
 
         fetchProducts();

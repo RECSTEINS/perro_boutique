@@ -62,7 +62,7 @@ export const featuredProducts = [
     id: 'p-006',
     slug: 'vestido-fiesta',
     name: 'Vestido Fiesta',
-    price: 580,
+    price: 10000,
     emoji: '👗',
     bgColor: 'brand.mintLight',
     isNew: true,

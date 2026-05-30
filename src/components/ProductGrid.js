@@ -1,8 +1,10 @@
-import { Box, Grid, Heading, Stack, Text } from '@chakra-ui/react';
+import { Box, Grid, Heading, Spinner, Stack, Text } from '@chakra-ui/react';
 import ProductCard from './ProductCard';
-import { featuredProducts } from '../data/products';
+import { useFeaturedProducts } from '../hooks/useFeaturedProducts';
 
 function ProductGrid() {
+
+  const { products, loading, error } = useFeaturedProducts();
   return (
     <Box maxW="1200px" mx="auto" px={{ base: 5, md: 8 }} py={{ base: 10, md: 12 }}>
       <Stack align="center" mb={8} gap={1}>
@@ -21,18 +23,33 @@ function ProductGrid() {
         </Heading>
       </Stack>
 
-      <Grid
-        templateColumns={{
-          base: '1fr',
-          sm: 'repeat(2, 1fr)',
-          md: 'repeat(3, 1fr)',
-        }}
-        gap={5}
-      >
-        {featuredProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </Grid>
+      {loading && (
+        <Stack align="center" py={10}>
+          <Spinner color="brand.purple"/>
+          <Text fontSize="sm" color="brand.purpleSoft">Cargando productos...</Text>
+        </Stack>
+      )}
+
+      {error && (
+        <Text textAlign="center" color="brand.pinkDark" py={6}>
+          Ups, no pudimos cargar los productos. Recarga la página, por favor.
+        </Text>
+      )}
+
+      {!loading && !error && (
+        <Grid
+          templateColumns={{
+            base: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+          }}
+          gap={5}
+        >
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </Grid>
+      )}
     </Box>
   );
 }
