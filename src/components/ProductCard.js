@@ -15,7 +15,7 @@ function ProductCard({ product }) {
       transition="all 0.2s ease"
       _hover={{ transform: 'translateY(-4px)', boxShadow: '0 8px 24px rgba(107, 46, 171, 0.12)' }}
     >
-      {product.isNew && (
+      {product.is_new && (
         <Box
           position="absolute"
           top={4}
