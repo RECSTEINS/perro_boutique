@@ -1,7 +1,8 @@
-import { Box, Flex, HStack, Text, Link as ChakraLink, Image, Circle } from '@chakra-ui/react';
-import { Link as RouterLink } from 'react-router-dom';
-import { FiSearch, FiHeart, FiShoppingBag } from 'react-icons/fi';
+import { Box, Flex, HStack, Text, Link as ChakraLink, Image, Circle, Button } from '@chakra-ui/react';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { FiSearch, FiHeart, FiShoppingBag, FiUser, FiLogOut } from 'react-icons/fi';
 import logo from '../assets/logo_sin_fondo.PNG';
+import { useAuth } from '../lib/AuthContext';
 
 // Items de navegación. Para agregar más solo añade un objeto a este array.
 const navItems = [
@@ -12,6 +13,16 @@ const navItems = [
 ];
 
 function Header() {
+  const { user, profile, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  const firstName = profile?.full_name?.split(' ')[0] || '';
+
+  async function handleLogOut(){
+    await signOut();
+    navigate('/');
+  }
+
   return (
     <Box
       as="header"
@@ -74,9 +85,31 @@ function Header() {
         <HStack gap={4} color="brand.purple">
           <Box as={FiSearch} boxSize="20px" cursor="pointer" _hover={{ color: 'brand.pink' }} />
           <Box as={FiHeart} boxSize="20px" cursor="pointer" _hover={{ color: 'brand.pink' }} />
-          <Box position="relative" cursor="pointer" _hover={{ color: 'brand.pink' }}>
+
+          {!loading && user && (
+            <HStack gap={3}>
+              <Text fontSize="sm" fontWeight="600" display={{ base: 'none', md: 'block'}}>
+                Hola, {firstName || 'amigx'} 👋
+              </Text>
+              <Box
+                as={FiLogOut}
+                boxSize="20px"
+                cursor="pointer"
+                onClick={handleLogOut}
+                _hover={{ color: 'brand.pink'}}
+                title="Cerrar sesión"
+              />
+            </HStack>
+          )}
+
+          {!loading && !user && (
+            <ChakraLink as={RouterLink} to="/login" color="brand.purple" _hover={{ color:'brand.pink'}}>
+              <Box as={FiUser} boxSize="20px" />
+            </ChakraLink>
+          )}
+
+          <Box position="relative" cursor="pointer" _hover={{ color: 'brand.pink'}}>
             <Box as={FiShoppingBag} boxSize="20px" />
-            {/* Burbujita con el número de items en el carrito */}
             <Circle
               size="18px"
               bg="brand.pink"

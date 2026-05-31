@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { ChakraProvider } from '@chakra-ui/react';
 import { BrowserRouter } from 'react-router-dom';
 import { system } from './theme/system';
+import { AuthProvider } from './lib/AuthContext';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
@@ -12,7 +13,9 @@ root.render(
   <React.StrictMode>
     <ChakraProvider value={system}>
       <BrowserRouter>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </BrowserRouter>
     </ChakraProvider>
   </React.StrictMode>
