@@ -86,28 +86,6 @@ function Header() {
           <Box as={FiSearch} boxSize="20px" cursor="pointer" _hover={{ color: 'brand.pink' }} />
           <Box as={FiHeart} boxSize="20px" cursor="pointer" _hover={{ color: 'brand.pink' }} />
 
-          {!loading && user && (
-            <HStack gap={3}>
-              <Text fontSize="sm" fontWeight="600" display={{ base: 'none', md: 'block'}}>
-                Hola, {firstName || 'amigx'} 👋
-              </Text>
-              <Box
-                as={FiLogOut}
-                boxSize="20px"
-                cursor="pointer"
-                onClick={handleLogOut}
-                _hover={{ color: 'brand.pink'}}
-                title="Cerrar sesión"
-              />
-            </HStack>
-          )}
-
-          {!loading && !user && (
-            <ChakraLink as={RouterLink} to="/login" color="brand.purple" _hover={{ color:'brand.pink'}}>
-              <Box as={FiUser} boxSize="20px" />
-            </ChakraLink>
-          )}
-
           <Box position="relative" cursor="pointer" _hover={{ color: 'brand.pink'}}>
             <Box as={FiShoppingBag} boxSize="20px" />
             <Circle
@@ -123,6 +101,27 @@ function Header() {
               2
             </Circle>
           </Box>
+          {!loading && user && (
+            <HStack gap={3}>
+              <Box
+                as={FiLogOut}
+                boxSize="20px"
+                cursor="pointer"
+                onClick={handleLogOut}
+                _hover={{ color: 'brand.pink'}}
+                title="Cerrar sesión"
+              />
+              <Text fontSize="sm" fontWeight="600" display={{ base: 'none', md: 'block'}}>
+                Hola, {firstName || 'amigx'} 👋
+              </Text>
+            </HStack>
+          )}
+
+          {!loading && !user && (
+            <ChakraLink as={RouterLink} to="/login" color="brand.purple" _hover={{ color:'brand.pink'}}>
+              <Box as={FiUser} boxSize="20px" />
+            </ChakraLink>
+          )}
         </HStack>
       </Flex>
     </Box>

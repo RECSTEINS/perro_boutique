@@ -3,74 +3,100 @@ import { supabase } from './supabase';
 
 const AuthContext = createContext(null);
 
-export function AuthProvider({ children}){
+function withTimeout(promise, ms = 5000, label = 'operation') {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) =>
+            setTimeout(() => reject(new Error(`Timeout en ${label} (${ms}ms)`)), ms)
+        ),
+    ]);
+}
+
+export function AuthProvider({ children }) {
     const [user, setUser] = useState(null);
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    async function fetchProfile(userId){
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('id,full_name, role, is_active')
-            .eq('id', userId).single();
-        
-        if(error){
-            console.error('Error al cargar el perfil: ',error);
-            return null;
+    async function fetchProfile(userId) {
+        try {
+            const { data, error } = await withTimeout(
+                supabase.from('profiles')
+                .select('id, full_name, role, is_active')
+                .eq('id', userId).single(),
+                5000,
+                'fetchProfile'
+            );
+            if (error) {
+                console.error('Error al cargar el perfil:', error);
+                return null;
+            }
+            return data;
+        } catch (err) {
+            console.error('fetchProfile falló:', err.message);
+        return null;
         }
-        return data;
     }
 
     useEffect(() => {
-        async function loadSession(){
-            const { data:{ session }} = await supabase.auth.getSession();
+        let mounted = true;
+        let lastLoadedUserId = null;
 
-            if (session?.user){
+        async function handleSession(session, forceRefresh = false) {
+            if (!mounted) return;
+            
+            if (session?.user) {
                 setUser(session.user);
-                const profileData = await fetchProfile(session.user.id);
-                setProfile(profileData);
-            }
-            setLoading(false);
-        }
-
-        loadSession();
-
-        const { data:{ subscription }} = supabase.auth.onAuthStateChange(
-            async (_event, session) => {
-                if (session?.user){
-                    setUser(session.user);
+                if (forceRefresh || session.user.id !== lastLoadedUserId) {
                     const profileData = await fetchProfile(session.user.id);
-                    setProfile(profileData);
-                } else{
-                    setUser(null);
-                    setProfile(null);
+                    if (mounted) {
+                        setProfile(profileData);
+                        lastLoadedUserId = session.user.id;
+                    }
                 }
+            } else {
+                setUser(null);
+                setProfile(null);
+                lastLoadedUserId = null;
             }
-        );
-
-        return () => subscription.unsubscribe();
-    }, []);
-
-    async function signIn({ email, password}){
-        const {data, error} = await supabase.auth.signInWithPassword({
-            email,
-            password
+            if (mounted) setLoading(false);
+        }
+        
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            handleSession(session);
         });
-        return {data, error};
+        
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            const importantEvents = ['SIGNED_IN', 'SIGNED_OUT', 'USER_UPDATED', 'PASSWORD_RECOVERY'];
+            
+            if (importantEvents.includes(event)) {
+                handleSession(session, true);
+            } else {
+                handleSession(session, false);
+            }
+        }
+    );
+    
+    return () => {
+        mounted = false;
+        subscription.unsubscribe();
+        };
+    }, []);
+    
+    async function signIn({ email, password }) {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        return { data, error };
     }
 
     async function signUp({ email, password, fullName }){
         const {data, error} = await supabase.auth.signUp({
             email,
             password,
-            options:{
-                data: { full_name: fullName}
-            }
+            options: { data: { full_name: fullName } },
         });
         return {data, error};
     }
 
-    async function signOut(){
+    async function signOut() {
         await supabase.auth.signOut();
     }
 
@@ -83,7 +109,7 @@ export function AuthProvider({ children}){
         signOut,
         isAuthenticated: !!user,
         isAdmin: profile?.role === 'admin' && profile?.is_active,
-        isStaff: ['admin', 'manager'].includes(profile?.role) && profile?.is_active
+        isStaff: ['admin', 'manager'].includes(profile?.role) && profile?.is_active,
     };
 
     return (
@@ -96,7 +122,7 @@ export function AuthProvider({ children}){
 export function useAuth(){
     const context = useContext(AuthContext);
     if(context === null){
-        throw new Error('useAuth debe ser usado dentro de un AuthProvider');
+        throw new Error('useAuth debe usarse dentro de <AuthProvider>');
     }
     return context;
 }
