@@ -81,7 +81,7 @@ function Header() {
           ))}
         </HStack>
 
-        {/* Acciones: buscar, favoritos, carrito */}
+        {/* Acciones */}
         <HStack gap={4} color="brand.purple">
           <Box as={FiSearch} boxSize="20px" cursor="pointer" _hover={{ color: 'brand.pink' }} />
           <Box as={FiHeart} boxSize="20px" cursor="pointer" _hover={{ color: 'brand.pink' }} />
