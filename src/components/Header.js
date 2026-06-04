@@ -1,7 +1,7 @@
 import { Box, Flex, HStack, Text, Link as ChakraLink, Image, Circle, Button } from '@chakra-ui/react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { FiSearch, FiHeart, FiShoppingBag, FiUser, FiLogOut } from 'react-icons/fi';
-import logo from '../assets/logo_sin_fondo.PNG';
+import { FiSearch, FiHeart, FiShoppingBag, FiUser, FiLogOut, FiGrid } from 'react-icons/fi';
+import logo from '../assets/logo_sin_fondo.jpg';
 import { useAuth } from '../lib/AuthContext';
 
 // Items de navegación. Para agregar más solo añade un objeto a este array.
@@ -13,7 +13,7 @@ const navItems = [
 ];
 
 function Header() {
-  const { user, profile, signOut, loading } = useAuth();
+  const { user, profile, signOut, loading, isStaff } = useAuth();
   const navigate = useNavigate();
 
   const firstName = profile?.full_name?.split(' ')[0] || '';
@@ -120,6 +120,18 @@ function Header() {
           {!loading && !user && (
             <ChakraLink as={RouterLink} to="/login" color="brand.purple" _hover={{ color:'brand.pink'}}>
               <Box as={FiUser} boxSize="20px" />
+            </ChakraLink>
+          )}
+
+          {!loading && isStaff &&(
+            <ChakraLink
+              as={RouterLink}
+              to="/admin"
+              color="brand.purple"
+              _hover={{color: 'brand.pink'}}
+              title='Panel de administración'
+            >
+              <Box as={FiGrid} boxSize="20px"/>
             </ChakraLink>
           )}
         </HStack>

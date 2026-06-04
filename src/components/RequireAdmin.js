@@ -15,7 +15,7 @@ function RequireAdmin({ children }){
         )
     }
 
-    if(!user){
+    if(!user || !isStaff){
         return <Navigate to="/" state={{deniedAccess: true}} replace/>
     }
 
