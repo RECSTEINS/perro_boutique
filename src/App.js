@@ -36,7 +36,7 @@ function App() {
             <DashboardLayout/>
           </RequireAdmin>
         }
-      >"
+      >
         <Route index element={<Navigate to="productos" replace/>}/>
         <Route path='productos' element={<ProductsList/>}/>
 

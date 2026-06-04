@@ -1,7 +1,8 @@
-import { Box, Flex, HStack, Stack, Text, Circle } from '@chakra-ui/react';
+import { Box, Flex, HStack, Stack, Text, Circle, Image } from '@chakra-ui/react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { FiTag, FiFolder, FiUsers, FiBarChart2, FiLogOut, FiHome } from 'react-icons/fi';
 import { useAuth } from '../lib/AuthContext';
+import logo from '../assets/logo_sin_fondo.jpg'
 
 const navItems = [
     { label: 'Productos', to: '/admin/productos', icon: FiTag},
@@ -80,6 +81,7 @@ function DashboardLayout(){
             {/* Sidebar */}
             <Flex
                 as="aside"
+                direction="column"
                 w={{base: '70px', md:'250px'}}
                 bg="brand.purple"
                 color="white"
@@ -91,8 +93,8 @@ function DashboardLayout(){
                 flexShrink={0}
             >
                 <HStack gap={2.5} px={2} mb={8}>
-                    <Circle size="40px" bg="brand.mint" color="white" fontSize="20px" flexShrink={0}>
-                        Logo pendiente
+                    <Circle size="40px" overflow="hidden" flexShrink={0} bg="brand.mint">
+                        <Image src={logo} alt='La PerroBoutique' objectFit="cover" boxSize="40px"/>
                     </Circle>
                     <Stack gap={0} display={{base:'none', md:'flex'}}>
                         <Text fontFamily="heading" fontSize="md" fontWeight="600" lineHeight="1.1">
