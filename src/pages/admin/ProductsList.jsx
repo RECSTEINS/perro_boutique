@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Flex, Stack, HStack, Heading, Text, Input, Button, Table, Badge, Image, Spinner, Circle} from '@chakra-ui/react'
 import { FiSearch, FiPlus, FiEdit2 } from 'react-icons/fi';
 import { useAdminProducts } from '../../hooks/useAdminProducts';
@@ -19,6 +20,7 @@ function ProductsList(){
     const {products, loading, error} = useAdminProducts();
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('todos');
+    const navigate = useNavigate();
 
     const filtered = useMemo(() => {
         return products.filter((p) => {
@@ -58,7 +60,7 @@ function ProductsList(){
                     fontWeight="600"
                     fontSize="sm"
                     _hover={{bg: 'brand.purpleDark'}}
-                    disabled
+                    onClick={() => navigate('/admin/productos/nuevo')}
                 >
                     <Box as={FiPlus} boxSize="16px" mr={1}/>
                     Nuevo producto

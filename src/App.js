@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProductsList from './pages/admin/ProductsList';
+import ProductForm from './pages/admin/ProductForm';
 
 function PublicLayout({children}){
   return(
@@ -38,6 +39,7 @@ function App() {
       >
         <Route index element={<Navigate to="productos" replace/>}/>
         <Route path='productos' element={<ProductsList/>}/>
+        <Route path='productos/nuevo' element={<ProductForm/>}/>
       </Route>
       
       <Route path='*' element={<Navigate to="/"/>}/>
