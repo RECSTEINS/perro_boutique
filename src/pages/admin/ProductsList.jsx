@@ -4,6 +4,7 @@ import { Box, Flex, Stack, HStack, Heading, Text, Input, Button, Table, Badge, I
 import { FiSearch, FiPlus, FiEdit2 } from 'react-icons/fi';
 import { useAdminProducts } from '../../hooks/useAdminProducts';
 import { formatPriceRange } from '../../utils/format';
+import { supabase } from '../../lib/supabase';
 
 const STATUS_FILTERS = [
     {key: 'todos', label: 'Todos'},
@@ -17,10 +18,11 @@ function totalStock(product){
 }
 
 function ProductsList(){
-    const {products, loading, error} = useAdminProducts();
+    const {products, loading, error, refetch} = useAdminProducts();
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('todos');
     const navigate = useNavigate();
+    const [togglingId, setTogglingId] = useState(null);
 
     const filtered = useMemo(() => {
         return products.filter((p) => {
@@ -32,6 +34,19 @@ function ProductsList(){
             return matchesSearch && matchesStatus;
         });
     }, [products, search, statusFilter]);
+
+    async function toggleActive(product){
+        setTogglingId(product.id);
+
+        const {error} = await supabase.from('products').update({is_active: !product.is_active}).eq('id', product.id);
+
+        if(error){
+            console.error('No se pudo cambiar el estado: ',error)
+        }else{
+            await refetch();
+        }
+        setTogglingId(null);
+    }
 
     return(
         <Box px={{base: 5, md: 10}} py={{base: 6, md:8}} maxW="1100px">
@@ -218,15 +233,22 @@ function ProductsList(){
 
                                                 <Table.Cell>
                                                     <Badge
+                                                        as="button"
                                                         borderRadius="pill"
                                                         px={3}
                                                         py={1}
                                                         fontSize="11px"
                                                         fontWeight="700"
+                                                        cursor="pointer"
                                                         bg={product.is_active ? 'brand.mintLight' : 'brand.pinkLight'}
                                                         color={product.is_active ? '#2C7A6B': 'brand.pinkDark'}
+                                                        opacity={togglingId === product.id ? 0.5 : 1}
+                                                        onClick={() => toggleActive(product)}
+                                                        _disabled={togglingId === product.id}
+                                                        title={product.is_active ? 'Clic para ocultar de la tienda' : 'Clic para mostrar en la tienda'}
+                                                        _hover={{filter:'brightness(0.95)'}}
                                                     >
-                                                        {product.is_active ? 'Activo' : 'Inactivo'}
+                                                        {togglingId === product.id ? '...' : (product.is_active ? 'Activo' : 'Inactivo')}
                                                     </Badge>
                                                 </Table.Cell>
 
@@ -236,7 +258,7 @@ function ProductsList(){
                                                         variant="ghost"
                                                         color="brand.purple"
                                                         _hover={{bg: 'brand.purpleLight'}}
-                                                        disabled
+                                                        onClick={() => navigate(`/admin/productos/${product.id}/editar`)}
                                                     >
                                                         <Box as={FiEdit2} boxSize="14px" mr={1}/>
                                                         Editar

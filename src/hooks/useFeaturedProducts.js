@@ -24,7 +24,7 @@ export function useFeaturedProducts(){
                     compare_at_price_cents,
                     stock
                 )`
-            ).order('created_at', { ascending: false});
+            ).eq('is_active', true).order('created_at', { ascending: false});
 
             if(error){
                 setError(error);

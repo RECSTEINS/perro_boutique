@@ -8,6 +8,8 @@ import { useAdminProducts } from "../../hooks/useAdminProducts";
 import { slugify } from "../../utils/slugify";
 import ImageUploader from "../../components/ImageUploader";
 
+const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'Único'];
+
 function emptyVariant(){
     return { size: '', price: '', discountPct: '', stock: ''};
 }
@@ -36,8 +38,19 @@ function compareAtLabel(priceStr, pctStr){
     return `$${(cents / 100).toLocaleString('es-MX')}`;
 }
 
+function discountFromCompareAt(priceCents, compareAtCents){
+    if(!compareAtCents || !priceCents) return '';
+    if(compareAtCents <= priceCents) return '';
+    const pct = (1 - priceCents / compareAtCents) * 100;
+    return String(Math.round(pct));
+}
+
 function ProductForm(){
     const navigate = useNavigate();
+
+    const { id } = useParams();
+    const isEditing = Boolean(id);
+
     const {categories, loading: loadingCategories} = useCategories();
     const { refetch } = useAdminProducts();
 
@@ -53,6 +66,57 @@ function ProductForm(){
 
     const [error, setError] = useState(null);
     const [saving, setSaving] = useState(false);
+
+    const [loadingProduct, setLoadingProduct] = useState(isEditing);
+
+    useEffect(() => {
+        if(!isEditing) return;
+
+        let mounted = true;
+
+        async function loadProduct(){
+            setLoadingProduct(true);
+            setError(null);
+
+            const {data, error: loadError} = await supabase.from('products').select(`
+                    id, name, slug, description, category_id, is_new, is_active, image_urls,
+                    product_variants (id, size, price_cents, compare_at_price_cents, stock)
+                `).eq('id', id).single();
+
+            if(!mounted) return;
+
+            if(loadError || !data){
+                setError('No se pudo cargar el producto. Puede que ya no existe.');
+                setLoadingProduct(false);
+                return;
+            }
+
+            setName(data.name);
+            setSlug(data.slug);
+            setSlugEdited(true);
+            setDescription(data.description || '');
+            setCategoryId(data.category_id);
+            setIsNew(data.is_new);
+            setIsActive(data.is_active);
+            setImageUrls(data.image_urls || []);
+
+            const loadedVariants = (data.product_variants || []).map((v) => ({
+                size: v.size || '',
+                price: v.price_cents != null ? String(v.price_cents / 100) : '',
+                discountPct: discountFromCompareAt(v.price_cents, v.compare_at_price_cents),
+                stock: v.stock != null ? String(v.stock) : ''
+            }));
+
+            setVariants(loadedVariants.length > 0 ? loadedVariants : [emptyVariant()]);
+            setLoadingProduct(false);
+        }
+
+        loadProduct();
+
+        return() => {
+            mounted = false;
+        };
+    }, [id, isEditing]);
 
     function handleNameChange(value){
         setName(value);
@@ -97,7 +161,6 @@ function ProductForm(){
     }
 
     async function handleSubmit(){
-        console.log('handleSubmit llamado', Date.now()); 
         setError(null);
         const validationError = validate();
         if(validationError){
@@ -114,16 +177,33 @@ function ProductForm(){
             stock: v.stock === '' ? 0 : parseInt(v.stock, 10)
         }))
 
-        const { error: rpcError} = await supabase.rpc('create_product_with_variants', {
-            p_name: name.trim(),
-            p_slug: slug.trim(),
-            p_description: description.trim() || null,
-            p_category_id: categoryId,
-            p_is_new: isNew,
-            p_is_active: isActive,
-            p_image_urls: imageUrls,
-            p_variants: variantsPayload
-        });
+        let rpcError;
+
+        if(isEditing){
+            const {error} = await supabase.rpc('update_product_with_variants',{
+                p_product_id: id,
+                p_name: name.trim(),
+                p_description: description.trim() || null,
+                p_category_id: categoryId,
+                p_is_new: isNew,
+                p_is_active: isActive,
+                p_image_urls: imageUrls,
+                p_variants: variantsPayload
+            });
+            rpcError = error;
+        }else{
+            const {error} = await supabase.rpc('create_product_with_variants', {
+                p_name: name.trim(),
+                p_slug: slug.trim(),
+                p_description: description.trim() || null,
+                p_category_id: categoryId,
+                p_is_new: isNew,
+                p_is_active: isActive,
+                p_image_urls: imageUrls,
+                p_variants: variantsPayload
+            })
+            rpcError = error;
+        }
         
         if(rpcError){
             setError(
@@ -135,6 +215,15 @@ function ProductForm(){
 
         await refetch();
         navigate('/admin/productos');
+    }
+
+    if(loadingProduct){
+        return(
+            <Stack align="center" justify="center" minH="60vh" gap={3}>
+                <Spinner color="brand.purple" size="lg" />
+                <Text fontSize="sm" color="brand.purpleSoft">Cargando producto...</Text>
+            </Stack>
+        )
     }
 
     return(
@@ -151,10 +240,10 @@ function ProductForm(){
                 </IconButton>
                 <Stack gap={0}>
                     <Heading fontFamily="heading" fontSize="2xl" fontWeight="600" color="brand.purple">
-                        Nuevo producto
+                        {isEditing ? 'Editar producto' : 'Nuevo producto'}
                     </Heading>
                     <Text fontSize="sm" color="brand.purpleSoft">
-                        Completa los datos y agrega al menos una variante.
+                        {isEditing ? 'Modifica los datos y guarda los cambios.' : 'Completa los datos y agrega al menos una variante.'}
                     </Text>
                 </Stack>
             </HStack>
@@ -189,9 +278,12 @@ function ProductForm(){
                                 _focus={{borderColor: 'brand.purple'}}
                                 fontFamily="mono"
                                 fontSize="sm"
+
+                                disabled={isEditing}
+                                readOnly={isEditing}
                             />
                             <Field.HelperText color="brand.purpleSoft" fontSize="xs">
-                                Se genera automaticamente. Edítalo unicamente si quieres otro.
+                                {isEditing ? 'El slug no se puede cambiar una vez creado el producto.' : 'Se genera automáticamente. Edítalo únicamente si quieres otro.'}
                             </Field.HelperText>
                         </Field.Root>
 
@@ -302,6 +394,20 @@ function ProductForm(){
                     </Flex>
 
                     <Stack gap={3}>
+                        <Grid
+                            templateColumns={{base: 'none', md: '1fr 1fr 1fr 1.2fr 1fr auto'}}
+                            gap={2}
+                            display={{base: 'none', md: 'grid'}}
+                            px={1}
+                        >
+                            <Text fontSize="11px" fontWeight="700" color="brand.purpleSoft">TALLA</Text>
+                            <Text fontSize="11px" fontWeight="700" color="brand.purpleSoft">PRECIO $</Text>
+                            <Text fontSize="11px" fontWeight="700" color="brand.purpleSoft">DESC. %</Text>
+                            <Text fontSize="11px" fontWeight="700" color="brand.purpleSoft">PRECIO ANTERIOR</Text>
+                            <Text fontSize="11px" fontWeight="700" color="brand.purpleSoft">STOCK</Text>
+                            <Box />
+                        </Grid>
+
                         {variants.map((v, index) => (
                             <Grid
                                 key={index}
@@ -309,15 +415,31 @@ function ProductForm(){
                                 gap={2}
                                 alignItems="center"
                             >
-                                <Input
-                                    placeholder="Talla (S, M...)"
+                                <Box
+                                    as="select"
                                     value={v.size}
                                     onChange={(e) => updateVariant(index, 'size', e.target.value)}
                                     bg="white"
+                                    borderWidth="1px"
                                     borderColor="brand.purpleLight"
-                                    _focus={{borderColor: 'brand.purple'}}
-                                    size="sm"
-                                />
+                                    borderRadius="md"
+                                    px={2}
+                                    fontSize="sm"
+                                    color="brand.purple"
+                                    h="32px"
+                                    w="full"
+                                    _focus={{borderColor: 'brand.purple', outline: 'none'}}
+                                >
+                                    <option value="">Talla</option>
+                                    {SIZE_OPTIONS.map((size) => (
+                                        <option key={size} value={size}>
+                                            {size}
+                                        </option>
+                                    ))}
+                                    {v.size && !SIZE_OPTIONS.includes(v.size) &&(
+                                        <option value={v.size}>{v.size} (actual)</option>
+                                    )}
+                                </Box>
                                 <Input
                                     placeholder="Precio $"
                                     type="number"
@@ -414,7 +536,7 @@ function ProductForm(){
                         loadingText="Guardando..."
                     >
                         <Box as={FiSave} boxSize="16px" mr={1}/>
-                        Guardar producto
+                        {isEditing ? 'Guardar cambios' : 'Guardar producto'}
                     </Button>
                 </HStack>
             </Stack>

@@ -7,6 +7,8 @@ import DashboardLayout from './components/DashboardLayout';
 import Home from './pages/Home';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ProductPage from './pages/ProductPage';
+
 import ProductsList from './pages/admin/ProductsList';
 import ProductForm from './pages/admin/ProductForm';
 
@@ -28,6 +30,7 @@ function App() {
       <Route path='/' element={<PublicLayout><Home/></PublicLayout>}/>
       <Route path='/login' element={<PublicLayout><LoginPage/></PublicLayout>}/>
       <Route path='/registro' element={<PublicLayout><RegisterPage/></PublicLayout>}/>
+      <Route path='/producto/:slug' element={<PublicLayout><ProductPage/></PublicLayout>}/>
       
       <Route
         path='/admin'
@@ -40,6 +43,7 @@ function App() {
         <Route index element={<Navigate to="productos" replace/>}/>
         <Route path='productos' element={<ProductsList/>}/>
         <Route path='productos/nuevo' element={<ProductForm/>}/>
+        <Route path='productos/:id/editar' element={<ProductForm/>}/>
       </Route>
       
       <Route path='*' element={<Navigate to="/"/>}/>
