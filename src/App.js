@@ -11,6 +11,7 @@ import ProductPage from './pages/ProductPage';
 
 import ProductsList from './pages/admin/ProductsList';
 import ProductForm from './pages/admin/ProductForm';
+import CategoriesList from './pages/admin/CategoriesList';
 
 function PublicLayout({children}){
   return(
@@ -44,6 +45,7 @@ function App() {
         <Route path='productos' element={<ProductsList/>}/>
         <Route path='productos/nuevo' element={<ProductForm/>}/>
         <Route path='productos/:id/editar' element={<ProductForm/>}/>
+        <Route path='categorias' element={<CategoriesList/>}/>
       </Route>
       
       <Route path='*' element={<Navigate to="/"/>}/>

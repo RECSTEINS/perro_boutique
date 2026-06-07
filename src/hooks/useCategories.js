@@ -8,7 +8,10 @@ export function useCategories(){
 
     useEffect(() => {
         async function fetchCategories(){
-            const {data, error} = await supabase.from('categories').select('id, name, slug').order('name', { ascending: true});
+            const {data, error} = await supabase
+                .from('categories')
+                .select('id, name, slug').eq('is_active', true)
+                .order('name', { ascending: true});
 
             if(error){
                 setError(error);

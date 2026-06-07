@@ -6,7 +6,7 @@ import logo from '../assets/logo_sin_fondo.jpg'
 
 const navItems = [
     { label: 'Productos', to: '/admin/productos', icon: FiTag},
-    { label: 'Categorías', to: '/admin/categorias', icon: FiFolder, soon: true},
+    { label: 'Categorías', to: '/admin/categorias', icon: FiFolder},
     { label: 'Usuarios', to: '/admin/usuarios', icon: FiUsers, soon: true},
     { label: 'Estadísticas', to:'/admin/estadisticas', icon: FiBarChart2, soon: true}
 ];
