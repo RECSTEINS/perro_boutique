@@ -4,6 +4,7 @@ import { Box, Flex, Grid, Stack, HStack, Heading, Text, Image, Button, Badge, Sp
 import { FiShoppingBag, FiArrowLeft, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useProduct } from "../hooks/useProduct";
 import { formatPrice } from "../utils/format";
+import SizeGuide from "../components/SizeGuide";
 
 function ProductPage(){
     const {slug} = useParams();
@@ -286,6 +287,8 @@ function ProductPage(){
                     </Text>
                 </Stack>
             </Grid>
+
+            <SizeGuide/>
         </Box>
     )
 }
