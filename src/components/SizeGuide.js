@@ -22,7 +22,7 @@ const STEPS = [
 function GuideContent(){
     return(
         <Stack gap={6}>
-            <Grid templateColumns={{ base: '1fr', sm:'repeat(3, 1fr'}} gap={4}>
+            <Grid templateColumns={{ base: '1fr', sm:'repeat(3, 1fr)'}} gap={4}>
                 {STEPS.map((step) =>(
                     <Stack key={step.num} align="center" gap={2} textAlign="center">
                         <Box position="relative" w="full" bg="brand.cream" borderRadius="card" p={3}>
@@ -85,13 +85,14 @@ function SizeGuide(){
 
     return(
         <Box mt={4}>
-            <Flex align="center" justify="space-between" mb={4} wrap="wrap" gap={2}>
-                <Heading fontFamily="heading" fontSize="xl" fontWeight="600" color="brand.purple">
+            <Stack mb={4} gap={3}>
+                <Heading fontFamily="heading" fontSize="xl" fontWeight="600" color="brand.purple" textAlign={{base:'center', md:'left'}}>
                     📏 Cómo medir a tu perro
                 </Heading>
 
                 <Button
                     display={{base: 'inline-flex', md:'none'}}
+                    alignSelf="center"
                     size="sm"
                     borderRadius="pill"
                     bg="brand.purple"
@@ -103,7 +104,7 @@ function SizeGuide(){
                 >
                     Ver guía de tallas
                 </Button>
-            </Flex>
+            </Stack>
 
             <Box
                 display={{base: 'none', md:'block'}}
@@ -148,6 +149,7 @@ function SizeGuide(){
                                 bg="brand.purpleLight"
                                 color="brand.purple"
                                 cursor="pointer"
+                                justifyContent="center"
                                 _hover={{bg: 'brand.pinkLight', color:'brand.pinkDark'}}
                                 onClick={() => setOpen(false)}
                             >

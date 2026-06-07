@@ -14,7 +14,7 @@ export function useProduct(slug){
             setNotFound(false);
 
             const {data, error} = await supabase.from('products').select(`
-                    id, name, slug, description, image_urls, is_new, is_active,
+                    id, name, slug, description, category_id, image_urls, is_new, is_active,
                     product_variants (id, size, price_cents, compare_at_price_cents, stock)
                 `).eq('slug', slug).eq('is_active', true).maybeSingle();
             

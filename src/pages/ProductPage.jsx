@@ -5,6 +5,7 @@ import { FiShoppingBag, FiArrowLeft, FiChevronLeft, FiChevronRight } from "react
 import { useProduct } from "../hooks/useProduct";
 import { formatPrice } from "../utils/format";
 import SizeGuide from "../components/SizeGuide";
+import RelatedProducts from "../components/RelatedProducts";
 
 function ProductPage(){
     const {slug} = useParams();
@@ -289,6 +290,10 @@ function ProductPage(){
             </Grid>
 
             <SizeGuide/>
+            <RelatedProducts
+                currentId={product.id}
+                categoryId={product.categoryId}
+            />
         </Box>
     )
 }
