@@ -12,6 +12,7 @@ import ProductPage from './pages/ProductPage';
 import ProductsList from './pages/admin/ProductsList';
 import ProductForm from './pages/admin/ProductForm';
 import CategoriesList from './pages/admin/CategoriesList';
+import CatalogPage from './pages/CatalogPage';
 
 function PublicLayout({children}){
   return(
@@ -32,7 +33,7 @@ function App() {
       <Route path='/login' element={<PublicLayout><LoginPage/></PublicLayout>}/>
       <Route path='/registro' element={<PublicLayout><RegisterPage/></PublicLayout>}/>
       <Route path='/producto/:slug' element={<PublicLayout><ProductPage/></PublicLayout>}/>
-      
+      <Route path='/catalogo' element={<PublicLayout><CatalogPage/></PublicLayout>}/>      
       <Route
         path='/admin'
         element={
