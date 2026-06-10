@@ -1,3 +1,4 @@
+import { Link as RouterLink } from 'react-router-dom';
 import { Box, Button, Flex, Heading, Text, Stack, HStack } from '@chakra-ui/react';
 
 function Hero() {
@@ -54,6 +55,8 @@ function Hero() {
               fontWeight="600"
               fontSize="sm"
               _hover={{ bg: 'brand.purpleDark' }}
+              as={RouterLink}
+              to="/catalogo"
             >
               Ver tienda
             </Button>
