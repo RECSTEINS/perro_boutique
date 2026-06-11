@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import toast from 'react-hot-toast';
+import { Box, Flex, Stack, Image, Text } from "@chakra-ui/react";
 import { formatPrice } from "../utils/format";
 
 const CartContext = createContext(null);
@@ -18,58 +19,51 @@ function readStoredCart(){
     }
 }
 
-function buildAddedToastContent(product, variant){
-    const image = product.image && product.image_urls > 0 ? product.image_urls[0] : null;
+function AddedToast({product, variant}){
+    const image = product.image_urls && product.image_urls.length > 0 ? product.image_urls[0] :  null;
 
     return (
-        <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-            <div
-                style={{
-                    width:'48px',
-                    height:'48px',
-                    borderRadius:'12px',
-                    overflow:'hidden',
-                    flexShrink: 0,
-                    background:'#D6F5EC',
-                    display:'flex',
-                    alignItems:'center',
-                    justifyContent:'center'
-                }}
+        <Flex
+            align="center"
+            gap={3}
+            bg="white"
+            borderWidth="1px"
+            borderColor="brand.purpleLight"
+            borderRadius="16px"
+            boxShadow="0 8px 24px rgba(107, 46, 171, 0.18)"
+            px={3.5}
+            py={3}
+            maxW="360px"
+        >
+            <Box
+                w="48px"
+                h="48px"
+                flexShrink={0}
+                borderRadius="12px"
+                overflow="hidden"
+                bg="brand.mintLight"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
             >
                 {image ? (
-                    <img
-                        src={image}
-                        alt={product.name}
-                        style={{width:'100%', height:'100%', objectFit:'cover'}}
-                    />
-                ): (
-                    <span style={{fontSize: '22px'}}>🐾</span>
+                    <Image src={image} alt={product.name} w="full" h="full" objectFit="cover"/>
+                ) : (
+                    <Text fontSize="22px">🐾</Text>
                 )}
-            </div>
-            <div style={{minWidth: 0}}>
-                <div style={{
-                    fontWeight:600,
-                    color:'#6B2EAB',
-                    fontSize:'14px',
-                    lineHeight:1.2
-                }}>
+            </Box>
+            <Stack gap={0.5} minW={0}>
+                <Text fontWeight="600" color="brand.purple" fontSize="sm" lineHeight="1.2">
                     {product.name}
-                </div>
-                <div style={{fontSize:'12px', color: '#7B5BA8', marginTop:'2px'}}>
+                </Text>
+                <Text fontSize="xs" color="brand.purpleSoft">
                     1 × {formatPrice(variant.price_cents)} · Talla {variant.size}
-                </div>
-                <div
-                    style={{
-                        fontSize:'13px',
-                        fontWeight: 700,
-                        color: '#EC4899',
-                        marginTop:'2px'
-                    }}
-                >
+                </Text>
+                <Text fontSize="13px" fontWeight="700" color="brand.pink">
                     ¡Agregado al carrito!
-                </div>
-            </div>
-        </div>
+                </Text>
+            </Stack>
+        </Flex>
     );
 }
 
@@ -129,7 +123,7 @@ export function CartProvider({children}){
 
             return [...prev, newItem];
         });
-        toast.custom(buildAddedToastContent(product, variant));
+        toast.custom(<AddedToast product={product} variant={variant}/>);
     }
 
     function removeItem(variantId){

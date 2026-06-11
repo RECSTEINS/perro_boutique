@@ -10,7 +10,7 @@ const MOBILE_BREAKPOINT = 768;
 
 function useToastPosition(){
     const getPosition = () => typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT
-        ? 'botton-center' : 'top-center';
+        ? 'bottom-center' : 'top-center';
 
     const [position, setPosition] = useState(getPosition);
 
@@ -313,17 +313,8 @@ export function CartToaster(){
         <Toaster
             position={position}
             gutter={12}
-            toastOptions={{
-                duration: 3000,
-                style: {
-                    background:'#ffffff',
-                    border:'1px solid #F3E8FF',
-                    borderRadius: '16px',
-                    boxShadow:'0 8px 24px rgba(107, 46, 171, 0.18)',
-                    padding:'12px 14px',
-                    maxWidth:'360px',
-                },
-            }}
+            containerStyle={{top:80, bottom:24}}
+            toastOptions={{duration: 3000}}
         />
     );
 }
