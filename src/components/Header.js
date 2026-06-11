@@ -3,6 +3,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { FiSearch, FiHeart, FiShoppingBag, FiUser, FiLogOut, FiGrid } from 'react-icons/fi';
 import logo from '../assets/logo_sin_fondo.jpg';
 import { useAuth } from '../lib/AuthContext';
+import { useCart } from '../lib/CartContext';
 
 // Items de navegación. Para agregar más solo añade un objeto a este array.
 const navItems = [
@@ -14,6 +15,7 @@ const navItems = [
 
 function Header() {
   const { user, profile, signOut, loading, isStaff } = useAuth();
+  const {itemCount, openCart} = useCart();
   const navigate = useNavigate();
 
   const firstName = profile?.full_name?.split(' ')[0] || '';
@@ -86,20 +88,28 @@ function Header() {
           <Box as={FiSearch} boxSize="20px" cursor="pointer" _hover={{ color: 'brand.pink' }} />
           <Box as={FiHeart} boxSize="20px" cursor="pointer" _hover={{ color: 'brand.pink' }} />
 
-          <Box position="relative" cursor="pointer" _hover={{ color: 'brand.pink'}}>
+          <Box 
+            position="relative"
+            cursor="pointer" 
+            _hover={{ color: 'brand.pink'}} 
+            onClick={openCart} 
+            aria-label='Abrir carrito'
+          >
             <Box as={FiShoppingBag} boxSize="20px" />
-            <Circle
-              size="18px"
-              bg="brand.pink"
-              color="white"
-              position="absolute"
-              top="-8px"
-              right="-8px"
-              fontSize="10px"
-              fontWeight="700"
-            >
-              2
-            </Circle>
+            {itemCount > 0 && (
+              <Circle
+                size="18px"
+                bg="brand.pink"
+                color="white"
+                position="absolute"
+                top="-8px"
+                right="-8px"
+                fontSize="10px"
+                fontWeight="700"
+              >
+                {itemCount > 9 ? '9+' : itemCount}
+              </Circle>
+            )}
           </Box>
           {!loading && user && (
             <HStack gap={3}>

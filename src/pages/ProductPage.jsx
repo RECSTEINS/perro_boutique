@@ -3,6 +3,7 @@ import { useParams, Link as RouterLink } from "react-router-dom";
 import { Box, Flex, Grid, Stack, HStack, Heading, Text, Image, Button, Badge, Spinner, AspectRatio, Link as ChakraLink} from "@chakra-ui/react";
 import { FiShoppingBag, FiArrowLeft, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useProduct } from "../hooks/useProduct";
+import { useCart } from "../lib/CartContext";
 import { formatPrice } from "../utils/format";
 import SizeGuide from "../components/SizeGuide";
 import RelatedProducts from "../components/RelatedProducts";
@@ -10,9 +11,11 @@ import RelatedProducts from "../components/RelatedProducts";
 function ProductPage(){
     const {slug} = useParams();
     const {product, loading, notFound} = useProduct(slug);
+    const {addItem, openCart} = useCart();
 
     const [activeImage, setActiveImage] = useState(0);
     const [selectedVariant, setSelectedVariant] = useState(null);
+    const [needsSize, setNeedsSize] = useState(false);
 
     if(loading){
         return(
@@ -65,6 +68,8 @@ function ProductPage(){
         displayVariant && 
         displayVariant.compare_at_price_cents && 
         displayVariant.compare_at_price_cents > displayVariant.price_cents;
+    
+    const anyInStock = variants.some((v) => v.stock > 0);
 
     function prevImage(){
         setActiveImage((i) => (i === 0 ? images.length - 1 : i - 1));
@@ -72,6 +77,19 @@ function ProductPage(){
 
     function nextImage(){
         setActiveImage((i) => (i === images.length - 1 ? 0 : i + 1));
+    }
+
+    function handleSelectVariant(variant){
+        setSelectedVariant(variant);
+        setNeedsSize(false);
+    }
+
+    function handleAddToCart(){
+        if(!selectedVariant){
+            setNeedsSize(true);
+            return;
+        }
+        addItem(product, selectedVariant, 1);
     }
 
     return(
@@ -245,7 +263,7 @@ function ProductPage(){
                                         cursor={soldOut ? 'not-allowed' : 'pointer'}
                                         opacity={soldOut ? 0.5 : 1}
                                         position="relative"
-                                        onClick={() => !soldOut && setSelectedVariant(variant)}
+                                        onClick={() => !soldOut && handleSelectVariant(variant)}
                                         _hover={soldOut ? {} : {borderColor: 'brand.purple'}}
                                         title={soldOut ? 'Agotado' : `Talla ${variant.size}`}
                                     >
@@ -267,6 +285,12 @@ function ProductPage(){
                                     : 'Esta talla está agotada'}
                             </Text>
                         )}
+
+                        {needsSize && !selectedVariant && (
+                            <Text fontSize="xs" color="brand.pinkDark" fontWeight="600">
+                                Por favor elige una talla para continuar
+                            </Text>
+                        )}
                     </Stack>
 
                     <Button
@@ -278,21 +302,19 @@ function ProductPage(){
                         fontWeight="600"
                         fontSize="md"
                         _hover={{ bg: 'brand.purpleDark'}}
-                        disabled
+                        onClick={handleAddToCart}
+                        disabled={!anyInStock}
                     >
                         <Box as={FiShoppingBag} boxSize="18px" mr={2}/>
-                        Agregar al carrito
+                        {anyInStock ? 'Agregar al carrito' : 'Agotado'}
                     </Button>
-                    <Text fontSize="xs" color="brand.purpleSoft" textAlign="center" mt={-2}>
-                        🐾 El carrito estará disponible muy pronto
-                    </Text>
                 </Stack>
             </Grid>
 
             <SizeGuide/>
             <RelatedProducts
                 currentId={product.id}
-                categoryId={product.categoryId}
+                categoryId={product.category_id}
             />
         </Box>
     )
