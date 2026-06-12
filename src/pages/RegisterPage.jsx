@@ -92,6 +92,7 @@ function RegisterPage(){
                                 required
                                 minLength={7}
                                 bg="white"
+                                borderColor="brand.purpleLight"
                                 _focus={{ borderColor: 'brand.purple'}}
                             />
                         </Box>

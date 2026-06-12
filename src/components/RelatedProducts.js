@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Box, Flex, Heading, Text, Spinner, Stack, Circle } from "@chakra-ui/react";
+import { Box, Flex, Heading, Text, Circle } from "@chakra-ui/react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useRelatedProducts } from "../hooks/useRelatedProducts";
 import ProductCard from './ProductCard';

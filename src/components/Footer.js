@@ -27,7 +27,7 @@ function Footer() {
             <Box as={CiFacebook} boxSize="30px" cursor="pointer" _hover={{ color: 'brand.pink' }} />
           </Link>
           <Link href="#" color="brand.purpleLight" _hover={{ color: 'white' }} fontSize="sm" fontWeight="600">
-            <Box as={FaTiktok} boxSize='30px' cursor='pointer' _hobver={{ color: 'brand.pink' }} />
+            <Box as={FaTiktok} boxSize='30px' cursor='pointer' _hover={{ color: 'brand.pink' }} />
           </Link>
         </HStack>
       </Flex>

@@ -79,14 +79,6 @@ export function CartProvider({children}){
         }
     }, [items]);
 
-    useEffect(() => {
-        try{
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-        }catch(error){
-            console.error('No se pudo guardar el carrito: ', error)
-        }
-    }, [items]);
-
     function addItem(product, variant, quantity = 1){
         if(!product || !variant) return;
 

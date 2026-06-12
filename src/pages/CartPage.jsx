@@ -193,7 +193,7 @@ function CartPage(){
             <Heading
                 as="h1"
                 fontFamily="heading"
-                fontSize={{base:'2xl', md:':3xl'}}
+                fontSize={{base:'2xl', md:'3xl'}}
                 fontWeight="600"
                 color="brand.purple"
                 mb={6}

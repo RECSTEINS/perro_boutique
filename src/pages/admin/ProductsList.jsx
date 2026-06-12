@@ -62,7 +62,7 @@ function ProductsList(){
                         Productos
                     </Heading>
                     <Text fontSize="sm" color="brand.purpleSoft">
-                        Gestiona el catátologo de la tienda.
+                        Gestiona el catálogo de la tienda.
                     </Text>
                 </Stack>
 

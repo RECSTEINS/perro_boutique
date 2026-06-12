@@ -43,7 +43,7 @@ function LoginPage(){
                     >
                         Hola de nuevo 🐾
                     </Heading>
-                    <Text fontSize="sm" color="bramd.purpleSoft">
+                    <Text fontSize="sm" color="brand.purpleSoft">
                         Inicia sesión para guardar tus favoritos y tu carrito.
                     </Text>
                 </Stack>
