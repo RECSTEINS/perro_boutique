@@ -240,7 +240,7 @@ function CategoriesList(){
                         maxW="420px"
                         boxShadow="0 12px 40px rgba(107, 46, 171, 0.25)"
                     >
-                        <Flex align="center" justify="space-between" mb={5}>"
+                        <Flex align="center" justify="space-between" mb={5}>
                             <Heading fontFamily="heading" fontSize="lg" fontWeight="600" color="brand.purple">
                                 {isEditing ? 'Editar categoría' : 'Nueva categoría'}
                             </Heading>
