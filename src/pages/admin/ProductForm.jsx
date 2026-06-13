@@ -11,7 +11,7 @@ import ImageUploader from "../../components/ImageUploader";
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'Único'];
 
 function emptyVariant(){
-    return { size: '', price: '', discountPct: '', stock: ''};
+    return { size: '', price: '', discountPct: '', stock: '', weightGrams:'', lengthCm: '', widthCm: '', heightCm: ''};
 }
 
 function pesosToCents(value){
@@ -80,7 +80,7 @@ function ProductForm(){
 
             const {data, error: loadError} = await supabase.from('products').select(`
                     id, name, slug, description, category_id, is_new, is_active, image_urls,
-                    product_variants (id, size, price_cents, compare_at_price_cents, stock)
+                    product_variants (id, size, price_cents, compare_at_price_cents, stock, weight_grams, length_cm, width_cm, height_cm)
                 `).eq('id', id).single();
 
             if(!mounted) return;
@@ -104,7 +104,11 @@ function ProductForm(){
                 size: v.size || '',
                 price: v.price_cents != null ? String(v.price_cents / 100) : '',
                 discountPct: discountFromCompareAt(v.price_cents, v.compare_at_price_cents),
-                stock: v.stock != null ? String(v.stock) : ''
+                stock: v.stock != null ? String(v.stock) : '',
+                weightGrams: v.weight_grams != null ? String(v.weight_grams) : '',
+                lengthCm: v.length_cm != null ? String(v.length_cm) : '',
+                widthCm: v.width_cm != null ? String(v.width_cm) : '',
+                heightCm: v.height_cm != null ? String(v.height_cm) : ''
             }));
 
             setVariants(loadedVariants.length > 0 ? loadedVariants : [emptyVariant()]);
@@ -156,6 +160,18 @@ function ProductForm(){
                     return 'El descuento debe ser un número entre 0 y 99.';
                 }
             }
+            const medidas = [
+                {campo: v.weightGrams, nombre: 'peso'},
+                {campo: v.lengthCm, nombre: 'largo'},
+                {campo: v.widthCm, nombre: 'ancho'},
+                {campo: v.heightCm, nombre: 'alto'}
+            ];
+            for(const m of medidas){
+                const num = parseInt(m.campo, 10);
+                if(Number.isNaN(num) || num <= 0){
+                    return `El ${m.nombre} de cada variante deber ser mayor que 0.`
+                }
+            }
         }
         return null;
     }
@@ -174,7 +190,11 @@ function ProductForm(){
             size: v.size.trim(),
             price_cents: pesosToCents(v.price),
             compare_at_price_cents: compareAtFromDiscount(v.price, v.discountPct),
-            stock: v.stock === '' ? 0 : parseInt(v.stock, 10)
+            stock: v.stock === '' ? 0 : parseInt(v.stock, 10),
+            weight_grams: parseInt(v.weightGrams, 10),
+            length_cm: parseInt(v.lengthCm, 10),
+            width_cm: parseInt(v.widthCm, 10),
+            height_cm: parseInt(v.heightCm, 10)
         }))
 
         let rpcError;
@@ -409,97 +429,145 @@ function ProductForm(){
                         </Grid>
 
                         {variants.map((v, index) => (
-                            <Grid
-                                key={index}
-                                templateColumns={{base:'1fr 1fr', sm:'1fr 1fr 1fr 1.2fr 1fr auto'}}
-                                gap={2}
-                                alignItems="center"
-                            >
-                                <Box
-                                    as="select"
-                                    value={v.size}
-                                    onChange={(e) => updateVariant(index, 'size', e.target.value)}
-                                    bg="white"
-                                    borderWidth="1px"
-                                    borderColor="brand.purpleLight"
-                                    borderRadius="md"
-                                    px={2}
-                                    fontSize="sm"
-                                    color="brand.purple"
-                                    h="32px"
-                                    w="full"
-                                    _focus={{borderColor: 'brand.purple', outline: 'none'}}
+                            <Stack key={index} gap={2} pb={3} borderBottom="1px solid" borderColor="brand.purpleLight">
+                                <Grid
+                                    templateColumns={{base:'1fr 1fr', sm:'1fr 1fr 1fr 1.2fr 1fr auto'}}
+                                    gap={2}
+                                    alignItems="center"
                                 >
-                                    <option value="">Talla</option>
-                                    {SIZE_OPTIONS.map((size) => (
-                                        <option key={size} value={size}>
-                                            {size}
-                                        </option>
-                                    ))}
-                                    {v.size && !SIZE_OPTIONS.includes(v.size) &&(
-                                        <option value={v.size}>{v.size} (actual)</option>
-                                    )}
-                                </Box>
-                                <Input
-                                    placeholder="Precio $"
-                                    type="number"
-                                    value={v.price}
-                                    onChange={(e) => updateVariant(index, 'price', e.target.value)}
-                                    bg="white"
-                                    borderColor="brand.purpleLight"
-                                    _focus={{borderColor: 'brand.purple'}}
-                                    size="sm"
-                                />
-                                <Input
-                                    placeholder="0%"
-                                    type="number"
-                                    value={v.discountPct}
-                                    onChange={(e) =>updateVariant(index, 'discountPct', e.target.value)}
-                                    bg="white"
-                                    borderColor="brand.purpleLight"
-                                    _focus={{borderColor: 'brand.purple'}}
-                                    size="sm"
-                                />
-                                <Flex
-                                    align="center"
-                                    px={3}
-                                    h="32px"
-                                    bg="brand.cream"
-                                    borderRadius="md"
-                                    borderWidth="1px"
-                                    borderColor="brand.purpleLight"
-                                >
-                                    <Text
+                                    <Box
+                                        as="select"
+                                        value={v.size}
+                                        onChange={(e) => updateVariant(index, 'size', e.target.value)}
+                                        bg="white"
+                                        borderWidth="1px"
+                                        borderColor="brand.purpleLight"
+                                        borderRadius="md"
+                                        px={2}
                                         fontSize="sm"
-                                        fontWeight="600"
-                                        color={compareAtFromDiscount(v.price, v.discountPct) ? 'brand.pink' : 'brand.purpleSoft'}
-                                        textDecoration={compareAtFromDiscount(v.price, v.discountPct) ? 'line-through' : 'none'}
+                                        color="brand.purple"
+                                        h="32px"
+                                        w="full"
+                                        _focus={{borderColor: 'brand.purple', outline: 'none'}}
                                     >
-                                        {compareAtLabel(v.price, v.discountPct)}
+                                        <option value="">Talla</option>
+                                        {SIZE_OPTIONS.map((size) => (
+                                            <option key={size} value={size}>
+                                                {size}
+                                            </option>
+                                        ))}
+                                        {v.size && !SIZE_OPTIONS.includes(v.size) &&(
+                                            <option value={v.size}>{v.size} (actual)</option>
+                                        )}
+                                    </Box>
+                                    <Input
+                                        placeholder="Precio $"
+                                        type="number"
+                                        value={v.price}
+                                        onChange={(e) => updateVariant(index, 'price', e.target.value)}
+                                        bg="white"
+                                        borderColor="brand.purpleLight"
+                                        _focus={{borderColor: 'brand.purple'}}
+                                        size="sm"
+                                    />
+                                    <Input
+                                        placeholder="0%"
+                                        type="number"
+                                        value={v.discountPct}
+                                        onChange={(e) =>updateVariant(index, 'discountPct', e.target.value)}
+                                        bg="white"
+                                        borderColor="brand.purpleLight"
+                                        _focus={{borderColor: 'brand.purple'}}
+                                        size="sm"
+                                    />
+                                    <Flex
+                                        align="center"
+                                        px={3}
+                                        h="32px"
+                                        bg="brand.cream"
+                                        borderRadius="md"
+                                        borderWidth="1px"
+                                        borderColor="brand.purpleLight"
+                                    >
+                                        <Text
+                                            fontSize="sm"
+                                            fontWeight="600"
+                                            color={compareAtFromDiscount(v.price, v.discountPct) ? 'brand.pink' : 'brand.purpleSoft'}
+                                            textDecoration={compareAtFromDiscount(v.price, v.discountPct) ? 'line-through' : 'none'}
+                                        >
+                                            {compareAtLabel(v.price, v.discountPct)}
+                                        </Text>
+                                    </Flex>
+                                    <Input
+                                        placeholder="Stock"
+                                        type="number"
+                                        value={v.stock}
+                                        onChange={(e) => updateVariant(index, 'stock', e.target.value)}
+                                        bg="white"
+                                        borderColor="brand.purpleLight"
+                                        _focus={{borderColor: 'brand.purple'}}
+                                        size="sm"
+                                    />
+                                    <IconButton
+                                        aria-label="Quitar variante"
+                                        size="sm"
+                                        variant="ghost"
+                                        color="brand.pinkDark"
+                                        _hover={{bg: 'brand.pinkLight'}}
+                                        onClick={() => removeVariant(index)}
+                                        disabled={variants.length === 1}
+                                    >
+                                        <Box as={FiTrash2} boxSize="16px"/>
+                                    </IconButton>
+                                </Grid>
+                                <Box pl={1}>
+                                    <Text fontSize="10px" fontWeight="700" color="brand.purpleSoft" mb={1}>
+                                        DATOS DE ENVÍO (PAQUETE)
                                     </Text>
-                                </Flex>
-                                <Input
-                                    placeholder="Stock"
-                                    type="number"
-                                    value={v.stock}
-                                    onChange={(e) => updateVariant(index, 'stock', e.target.value)}
-                                    bg="white"
-                                    borderColor="brand.purpleLight"
-                                    _focus={{borderColor: 'brand.purple'}}
-                                    size="sm"
-                                />
-                                <IconButton
-                                    aria-label="Quitar variante"
-                                    size="sm"
-                                    variant="ghost"
-                                    color="brand.pinkDark"
-                                    _hover={{bg: 'brand.pinkLight'}}
-                                    onClick={() => removeVariant(index)}
-                                    disabled={variants.length === 1}
-                                >
-                                    <Box as={FiTrash2} boxSize="16px"/>
-                                </IconButton>
-                            </Grid>
+                                    <Grid templateColumns="repeat(4, 1fr)" gap={2} maxW={{base:'full', sm:'80%'}}>
+                                        <Input
+                                            placeholder="Peso g"
+                                            type="number"
+                                            value={v.weightGrams}
+                                            onChange={(e) => updateVariant(index, 'weightGrams', e.target.value)}
+                                            bg="brand.cream"
+                                            borderColor="brand.purpleLight"
+                                            _focus={{borderColor:'brand.purple'}}
+                                            size="sm"
+                                        />
+                                        <Input
+                                            placeholder="Largo cm"
+                                            type="number"
+                                            value={v.lengthCm}
+                                            onChange={(e) => updateVariant(index, 'lengthCm', e.target.value)}
+                                            bg="brand.cream"
+                                            borderColor="brand.purpleLight"
+                                            _focus={{borderColor:'brand.purple'}}
+                                            size="sm"
+                                        />
+                                        <Input
+                                            placeholder="Ancho cm"
+                                            type="number"
+                                            value={v.widthCm}
+                                            onChange={(e) => updateVariant(index, 'widthCm', e.target.value)}
+                                            bg="brand.cream"
+                                            borderColor="brand.purpleLight"
+                                            _focus={{borderColor:'brand.purple'}}
+                                            size="sm"
+                                        />
+                                        <Input
+                                            placeholder="Alto cm"
+                                            type="number"
+                                            value={v.heightCm}
+                                            onChange={(e) => updateVariant(index, 'heightCm', e.target.value)}
+                                            bg="brand.cream"
+                                            borderColor="brand.purpleLight"
+                                            _focus={{borderColor:'brand.purple'}}
+                                            size="sm"
+                                        />
+                                    </Grid>
+                                </Box>
+                            </Stack>
                         ))}
                     </Stack>
                 </Box>
