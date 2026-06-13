@@ -15,6 +15,7 @@ import ProductForm from './pages/admin/ProductForm';
 import CategoriesList from './pages/admin/CategoriesList';
 import CatalogPage from './pages/CatalogPage';
 import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
 
 function PublicLayout({children}){
   return(
@@ -39,6 +40,7 @@ function App() {
       <Route path='/producto/:slug' element={<PublicLayout><ProductPage/></PublicLayout>}/>
       <Route path='/catalogo' element={<PublicLayout><CatalogPage/></PublicLayout>}/>
       <Route path='/carrito' element={<PublicLayout><CartPage/></PublicLayout>}/>
+      <Route path='/checkout' element={<PublicLayout><CheckoutPage/></PublicLayout>}/>
       <Route
         path='/admin'
         element={

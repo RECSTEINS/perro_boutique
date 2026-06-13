@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { Box, Flex, Stack, HStack, Heading, Text, Image, Button, Circle, IconButton } from "@chakra-ui/react";
+import { Box, Flex, Stack, HStack, Heading, Text, Image, Button, Circle, IconButton, Link as ChackraLink } from "@chakra-ui/react";
 import { FiX, FiShoppingBag, FiMinus, FiPlus } from "react-icons/fi";
 import { useCart } from "../lib/CartContext";
 import { formatPrice } from '../utils/format'
@@ -271,21 +271,20 @@ function CartDrawer(){
                             <Text fontSize="xs" color="brand.purpleSoft" textAlign="center" mt={-2}>
                                 🚚 El envío se calcula en el siguiente paso
                             </Text>
-                            <Button
-                                bg="brand.purple"
-                                color="white"
-                                borderRadius="pill"
-                                py={6}
-                                fontFamily="heading"
-                                fontWeight="600"
-                                _hover={{bg:'brand.purpleDark'}}
-                                disabled
-                            >
-                                Iniciar compra
-                            </Button>
-                            <Text fontSize="xs" color="brand.purpleSoft" textAlign="center" mt={-2}>
-                                🐾 El pago estará disponible muy pronto
-                            </Text>
+                            <ChackraLink as={RouterLink} to="/checkout" _hover={{textDecoration:'none'}} alignContent="center">
+                                <Button
+                                    bg="brand.purple"
+                                    color="white"
+                                    borderRadius="pill"
+                                    py={6}
+                                    fontFamily="heading"
+                                    fontWeight="600"
+                                    _hover={{bg:'brand.purpleDark'}}
+                                    alignContent="center"
+                                >
+                                    Iniciar compra
+                                </Button>
+                            </ChackraLink>
 
                             <Button
                                 variant="ghost"

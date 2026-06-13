@@ -269,19 +269,20 @@ function CartPage(){
                                 </Flex>
                             </Box>
 
-                            <Button
-                                bg="brand.purple"
-                                color="white"
-                                borderRadius="pill"
-                                py={6}
-                                mt={2}
-                                fontFamily="heading"
-                                fontWeight="600"
-                                _hover={{bg:'brand.purpleDark'}}
-                                disabled
-                            >
-                                Iniciar compra
-                            </Button>
+                            <ChakraLink as={RouterLink} to="/checkout" _hover={{textDecoration:'none'}}>
+                                    <Button
+                                    bg="brand.purple"
+                                    color="white"
+                                    borderRadius="pill"
+                                    py={6}
+                                    mt={2}
+                                    fontFamily="heading"
+                                    fontWeight="600"
+                                    _hover={{bg:'brand.purpleDark'}}
+                                >
+                                    Iniciar compra
+                                </Button>
+                            </ChakraLink>
                         </Stack>
                     </Box>
                 </Box>
