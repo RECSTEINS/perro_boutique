@@ -15,7 +15,7 @@ export function useProduct(slug){
 
             const {data, error} = await supabase.from('products').select(`
                     id, name, slug, description, category_id, image_urls, is_new, is_active,
-                    product_variants (id, size, price_cents, compare_at_price_cents, stock)
+                    product_variants (id, size, price_cents, compare_at_price_cents, stock, weight_grams, length_cm, width_cm, height_cm)
                 `).eq('slug', slug).eq('is_active', true).maybeSingle();
             
             if(!mounted) return;

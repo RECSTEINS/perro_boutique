@@ -110,6 +110,7 @@ export function CartProvider({children}){
                 priceCents: variant.price_cents,
                 compareAtPriceCents: variant.compare_at_price_cents ?? null,
                 stock,
+                weightGrams: variant.weight_grams ?? 0,
                 quantity: Math.min(quantity, stock),
             };
 
