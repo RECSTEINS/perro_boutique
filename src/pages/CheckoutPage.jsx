@@ -3,12 +3,14 @@ import { Box, Flex, Grid, Stack, HStack, Heading, Text, Input, Button, Field, Li
 import { FiArrowLeft, FiShoppingBag } from "react-icons/fi";
 import { useCart } from "../lib/CartContext";
 import { useCheckoutForm, ESTADOS_MX } from "../hooks/useCheckoutForm";
+import { useShipping } from "../hooks/useShipping";
 import { formatPrice } from "../utils/format";
 
 function CheckoutPage(){
     const {items, itemCount, subtotalCents} = useCart();
     const {form, errors, updateField, validate, getShippingAddress} = useCheckoutForm();
     const navigate = useNavigate();
+    const shipping = useShipping();
 
     if(items.length === 0){
         return(
@@ -52,6 +54,18 @@ function CheckoutPage(){
 
          console.log('Datos de checkout validados:', datosListos);
     }
+
+    function handleCalculaEnvio(){
+        const cp = form.postalCode.replace(/\D/g, '');
+        if(cp.length !== 5){
+            updateField('postalCode', form.postalCode);
+            return;
+        }
+        shipping.calculate(cp, items);
+    }
+
+    const shippingCents = shipping.selected ? shipping.selected.priceCents : 0;
+    const totalCents = subtotalCents + shippingCents;
 
     return(
         <Box maxW="1100px" mx="auto" px={{base:5, md:8}} py={{base:6, md:10}}>
@@ -246,12 +260,107 @@ function CheckoutPage(){
                                     {formatPrice(subtotalCents)}
                                 </Text>
                             </Flex>
-                            <Flex justify="space-between">
-                                <Text fontSize="sm" color="brand.purpleSoft">Envío</Text>
-                                <Text fontSize="sm" color="brand.purpleSoft" fontStyle="italic">
-                                    Se calcula al pagar
+
+                            <Box borderTop="1px solid" borderColor="brand.purpleLight" pt={3}>
+                                <Text fontSize="sm" fontWeight="700" color="brand.purple" mb={2}>
+                                    Envío
                                 </Text>
-                            </Flex>
+
+                                {!shipping.calculated && (
+                                    <Button
+                                        size="sm"
+                                        w="full"
+                                        bg="brand.mint"
+                                        borderRadius="pill"
+                                        fontWeight="600"
+                                        fontSize="xs"
+                                        _hover={{bg:'#56B8A0'}}
+                                        onClick={handleCalculaEnvio}
+                                        loading={shipping.loading}
+                                        loadingText="Calculando..."
+                                        disabled={form.postalCode.replace(/\D/g,'').length !== 5}
+                                    >
+                                        Calcular envío
+                                    </Button>
+                                )}
+                                {!shipping.calculated && form.postalCode.replace(/\D/g,'').length !== 5 && (
+                                    <Text fontSize="xs" color="brand.purpleSoft" mt={1}>
+                                        Escribe tu código postal arriba para calcular
+                                    </Text>
+                                )}
+
+                                {shipping.error && (
+                                    <Stack gap={2} mt={1}>
+                                        <Text fontSize="xs" color="brand.pinkDark">
+                                            {shipping.error}
+                                        </Text>
+                                        <Button
+                                            size="xs"
+                                            variant="outline"
+                                            borderColor="brand.purpleLight"
+                                            color="brand.purpleSoft"
+                                            fontWeight="600"
+                                            _hover={{borderColor:'brand.purple'}}
+                                            onClick={handleCalculaEnvio}
+                                            loading={shipping.loading}
+                                        >
+                                            Reintentar
+                                        </Button>
+                                    </Stack>
+                                )}
+
+                                {shipping.calculated && !shipping.error && shipping.options.length === 0 && (
+                                    <Text fontSize="xs" color="brand.purpleSoft">
+                                        No hay opciones de envío para tu zona. Verifica tu código postal.
+                                    </Text>
+                                )}
+
+                                {shipping.options.length > 0 && (
+                                    <Stack gap={2} mt={1}>
+                                        {shipping.options.map((op, i) => {
+                                            const isSelected = shipping.selected?.title === op.title;
+                                            return(
+                                                <Box
+                                                    key={i}
+                                                    as="button"
+                                                    onClick={() => shipping.setSelected(op)}
+                                                    textAlign="left"
+                                                    p={2.5}
+                                                    borderRadius="12px"
+                                                    borderWidth="2px"
+                                                    borderColor={isSelected ? 'brand.purple' : 'brand.purpleLight'}
+                                                    bg={isSelected ? 'brand.purpleLight' : 'white'}
+                                                    cursor="pointer"
+                                                    _hover={{borderColor:'brand.purple'}}
+                                                >
+                                                    <Flex justify="space-between" align="center" gap={2}>
+                                                        <Stack gap={0} minW={0}>
+                                                            <Text fontSize="xs" fontWeight="700" color="brand.purple" lineHeight="1.2">
+                                                                {op.courier}
+                                                            </Text>
+                                                            <Text fontSize="10px" color="brand.purpleSoft">
+                                                                {op.deliveryCommitment}
+                                                            </Text>
+                                                        </Stack>
+                                                        <Text fontSize="sm" fontWeight="700" color="brand.pink" flexShrink={0}>
+                                                            {formatPrice(op.priceCents)}
+                                                        </Text>
+                                                    </Flex>
+                                                </Box>
+                                            )
+                                        })}
+                                    </Stack>
+                                )}
+                            </Box>
+
+                            <Box borderTop="1px solid" borderColor="brand.purpleLight" pt={3}>
+                                <Flex justify="space-between" align="center">
+                                    <Text fontSize="md" fontWeight="700" color="brand.purple">Total</Text>
+                                    <Text fontSize="xl" fontWeight="700" color="brand.purple">
+                                        {formatPrice(totalCents)}
+                                    </Text>
+                                </Flex>
+                            </Box>
 
                             <Button
                                 bg="brand.purple"
@@ -260,14 +369,18 @@ function CheckoutPage(){
                                 py={6}
                                 mt={2}
                                 fontFamily="heading"
+                                fontWeight="600"
                                 _hover={{bg:'brand.purpleDark'}}
                                 onClick={handleContinue}
+                                disabled={!shipping.selected}
                             >
                                 Continuar al pago
                             </Button>
-                            <Text fontSize="xs" color="brand.purpleSoft" textAlign="center" mt={-1}>
-                                🐾 El envío y el pago se conectan muy pronto
-                            </Text>
+                            {!shipping.selected && (
+                                <Text fontSize="xs" color="brand.purpleSoft" textAlign="center" mt={-1}>
+                                    Elige una opción de envío para continuar
+                                </Text>
+                            )}
                         </Stack>
                     </Box>
                 </Box>
