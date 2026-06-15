@@ -11,7 +11,7 @@ Deno.serve(async(req) => {
     try{
       const body = await req.json();
       if(body?.data?.id) paymentId = body.data.id;
-      if(body?.type) tupo = body.type;
+      if(body?.type) tipo = body.type;
     } catch{
 
     }

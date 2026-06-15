@@ -96,7 +96,7 @@ Deno.serve(async(req) => {
     }
 
     const renglones = itemsValidados.map((it) => ({
-      order_id: orden_id,
+      order_id: orden.id,
       variant_id: it.variantId,
       product_name: it.productName,
       size: it.size,
