@@ -76,13 +76,15 @@ Deno.serve(async(req) =>{
     }
 
     const opcionesCrudas = await respuesta.json();
-    const opciones = (opcionesCrudas || []).map((op: any) => ({
-      title: op.title,
-      courier: op.courier,
-      serviceType: op.serviceType,
-      deliveryCommitment: op.deliveryCommitment,
-      priceCents: Math.round(Number(op.total) * 100)
-    }));
+    const opciones = (opcionesCrudas || [])
+      .filter((op: any) => op.available && op.details)
+      .map((op: any) => ({
+        title: op.summary,
+        courier: op.details.courier,
+        serviceType: op.details.service,
+        deliveryCommitment: op.details.deliveryCommitment,
+        priceCents: Math.round(Number(op.details.total) * 100)
+      }));
 
     return new Response(
       JSON.stringify({opciones}),
