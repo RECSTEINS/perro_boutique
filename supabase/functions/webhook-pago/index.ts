@@ -1,46 +1,94 @@
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
+//Edge Function: webhook-pago
 
-// Setup type definitions for built-in Supabase Runtime APIs
-import "@supabase/functions-js/edge-runtime.d.ts";
-import { withSupabase } from "@supabase/server";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-console.log("Hello from Functions!");
+Deno.serve(async(req) => {
+  try{
+    const url = new URL(req.url);
+    let paymentId = url.searchParams.get("data.id") || url.searchParams.get("id");
+    let tipo = url.searchParams.get("type") || url.searchParams.get("topic");
 
-// This endpoint uses 'publishable' | 'secret' access, apiKey is required.
-// Use publishable for Client-facing, key-validated endpoints
-// Use secret for Server-to-server, internal calls
-export default {
-  fetch: withSupabase({ auth: ["publishable", "secret"] }, async (req, ctx) => {
-    // Called by another service with a secret key
-    // ctx.supabaseAdmin bypasses RLS — use for privileged operations
-    /*
-    if (ctx.authMode === "secret") {
-      const { user_id } = await req.json();
-      const { data } = await ctx.supabaseAdmin.auth.admin.getUserById(user_id);
+    try{
+      const body = await req.json();
+      if(body?.data?.id) paymentId = body.data.id;
+      if(body?.type) tupo = body.type;
+    } catch{
 
-      return Response.json({
-        email: data?.user?.email,
-      });
     }
-    */
 
-    const { name } = await req.json();
+    if(tipo && tipo !== "payment"){
+      return new Response("ok",{status: 200});
+    }
 
-    return Response.json({
-      message: `Hello ${name}!`,
+    if(!paymentId){
+      return new Response("ok", {status: 200});
+    }
+
+    const accessToken = Deno.env.get("MERCADOPAGO_ACCESS_TOKEN");
+    const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`,{
+      headers:{"Authorization":`Bearer ${accessToken}`}
     });
-  }),
-};
 
-/* To invoke locally:
+    if(!mpRes.ok){
+      console.error("No se pudo consultar el pago en MP: ", mpRes.status);
+      return new Response("ok", {status: 200});
+    }
 
-  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
-  2. Make an HTTP request:
+    const pago = await mpRes.json();
+    const estadoPago = pago.status;
+    const ordenId = pago.external_reference;
 
-  curl -i --location --request POST 'http://127.0.0.1:54621/functions/v1/webhook-pago' \
-    --header 'apiKey: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' \
-    --data '{"name":"Functions"}'
+    if(!ordenId){
+      console.error("El pago no trae external_reference.");
+      return new Response("ok", {status: 200});
+    }
 
-*/
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const {data: orden, error: errOrden} = await supabaseAdmin.from("orders").select("id, status").eq("id", ordenId).single();
+
+    if(errOrden || !orden){
+      console.error("Orden no encontrada: ", ordenId);
+      return new Response("ok", {status: 200});
+    }
+
+    if(orden.status === "pagado"){
+      return new Response("ok", {status: 200});
+    }
+
+    if(estadoPago === "approved"){
+      await supabaseAdmin.from("orders").update({
+        status: "pagado",
+        mp_payment_id: String(paymentId),
+        updated_at: new Date().toISOString()
+      }).eq("id", ordenId);
+
+      const {data: renglones} = await supabaseAdmin.from("order_items")
+        .select("variant_id, quantity")
+        .eq("order_id", ordenId);
+
+      for(const renglon of renglones || []){
+        if(!renglon.variant_id) continue;
+
+        const {data: variante} = await supabaseAdmin.from("product_variants").select("stock").eq("id", renglon.variant_id).single();
+
+        if(variante){
+          const nuevoStock = Math.max(0, variante.stock - renglon.quantity);
+          await supabaseAdmin.from("product_variants").update({stock: nuevoStock}).eq("id", renglon.variant_id);
+        }
+      }
+
+      console.log(`Orden ${ordenId} marcada como pagada y stock descontado.`);
+    } else if(estadoPago === "rejected" || estadoPago === "cancelled"){
+      console.log(`Pago ${paymentId} rechazado para orden ${ordenId}.`);
+    }
+
+    return new Response("ok", {status: 200});
+  } catch(err){
+    console.error("Error en webhook-pagado: ",err);
+    return new Response("ok", {status: 200});
+  }
+});
