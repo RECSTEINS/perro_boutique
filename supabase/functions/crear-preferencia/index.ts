@@ -91,7 +91,7 @@ Deno.serve(async(req) => {
       .single();
 
     if(errOrden || !orden){
-      console.error("Error al crear la orden: " errOrden);
+      console.error("Error al crear la orden: ", errOrden);
       return jsonError("No se pudo crear el pedido.", 500);
     }
 

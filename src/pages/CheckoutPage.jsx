@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { Box, Flex, Grid, Stack, HStack, Heading, Text, Input, Button, Field, Link as ChakraLink } from "@chakra-ui/react";
 import { FiArrowLeft, FiShoppingBag } from "react-icons/fi";
@@ -5,12 +6,15 @@ import { useCart } from "../lib/CartContext";
 import { useCheckoutForm, ESTADOS_MX } from "../hooks/useCheckoutForm";
 import { useShipping } from "../hooks/useShipping";
 import { formatPrice } from "../utils/format";
+import { supabase } from "../lib/supabase";
 
 function CheckoutPage(){
     const {items, itemCount, subtotalCents} = useCart();
     const {form, errors, updateField, validate, getShippingAddress} = useCheckoutForm();
     const navigate = useNavigate();
     const shipping = useShipping();
+    const [procesandoPago, setProcesandoPago] = useState(false);
+    const [errorPago, setErrorPago] = useState(null);
 
     if(items.length === 0){
         return(
@@ -39,20 +43,56 @@ function CheckoutPage(){
         )
     }
 
-    function handleContinue(){
+    async function handleContinue(){
         const isValid = validate();
         if(!isValid) return;
 
-        const datosListos = {
-            contacto:{
-                fullName: form.fullName.trim(),
-                email: form.email.trim(),
-                phone: form.phone.replace(/\D/g, '')
-            },
-            direccion: getShippingAddress()
-        };
+        if(!shipping.selected){
+            setErrorPago('Elige una opción de envío antes de continuar.');
+            return;
+        }
 
-         console.log('Datos de checkout validados:', datosListos);
+        setProcesandoPago(true);
+        setErrorPago(null);
+
+        try{
+            const {data, error} = await supabase.functions.invoke('crear-preferencia',{
+                body:{
+                    items: items.map((it) => ({
+                        variantId: it.variantId,
+                        quantity: it.quantity
+                    })),
+                    contacto: {
+                        fullName: form.fullName.trim(),
+                        email: form.email.trim(),
+                        phone: form.phone.replace(/\D/g, '')
+                    },
+                    direccion: getShippingAddress(),
+                    envio:{
+                        priceCents: shipping.selected.priceCents,
+                        courier: shipping.selected.courier,
+                        serviceType: shipping.selected.serviceType
+                    }
+                }
+            });
+
+            if(error || data?.error){
+                setErrorPago(data?.error || 'No se pudo iniciar el pago. Intenta de nuevo.');
+                setProcesandoPago(false);
+                return;
+            }
+
+            if(data?.initPoint){
+                window.location.href = data.initPoint;
+            } else{
+                setErrorPago('No se recibió el enlace de pago. Intenta de nuevo.');
+                setProcesandoPago(false);
+            }
+        } catch(error){
+            console.error("Error al iniciar el pago: ", error);
+            setErrorPago('Ocurrió un error al procesar tu pedido. Intenta de nuevo.');
+            setProcesandoPago(false);
+        }
     }
 
     function handleCalculaEnvio(){
@@ -372,10 +412,17 @@ function CheckoutPage(){
                                 fontWeight="600"
                                 _hover={{bg:'brand.purpleDark'}}
                                 onClick={handleContinue}
-                                disabled={!shipping.selected}
+                                disabled={!shipping.selected || procesandoPago}
+                                loading={procesandoPago}
+                                loadingText="Redirigiendo al pago"
                             >
                                 Continuar al pago
                             </Button>
+                            {errorPago && (
+                                <Text fontSize="xs" color="brand.pinkDark" textAlign="center" mt={1}>
+                                    {errorPago}
+                                </Text>
+                            )}
                             {!shipping.selected && (
                                 <Text fontSize="xs" color="brand.purpleSoft" textAlign="center" mt={-1}>
                                     Elige una opción de envío para continuar
