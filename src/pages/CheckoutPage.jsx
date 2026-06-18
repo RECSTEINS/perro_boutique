@@ -11,7 +11,7 @@ import FormularioTarjeta from "../components/FormularioTarjeta";
 import { clear } from "@testing-library/user-event/dist/clear";
 
 function CheckoutPage(){
-    const {items, itemCount, subtotalCents} = useCart();
+    const {items, itemCount, subtotalCents, clear} = useCart();
     const {form, errors, updateField, validate, getShippingAddress} = useCheckoutForm();
     const navigate = useNavigate();
     const shipping = useShipping();

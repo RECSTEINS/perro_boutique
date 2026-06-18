@@ -88,7 +88,7 @@ function FormularioTarjeta({ amountCents, payerEmail, onPay, processing, errorMe
             const instResult = await mp.getInstallments({
                 amount: String(amountPesos),
                 bin,
-                paymentType: "credict_card"
+                paymentTypeId: "credit_card"
             });
 
             if(instResult && instResult.length > 0 && instResult[0].payer_costs){
@@ -170,7 +170,7 @@ function FormularioTarjeta({ amountCents, payerEmail, onPay, processing, errorMe
                 issuerId,
                 installments,
                 payerEmail,
-                identificaction: idNumber.trim() ? {type: "RFC", number: idNumber.trim()} : null
+                identification: idNumber.trim() ? {type: "RFC", number: idNumber.trim()} : null
             });
         } catch(err){
             console.error("Error al tokenizar la tarjeta:", err);
@@ -356,7 +356,7 @@ function FormularioTarjeta({ amountCents, payerEmail, onPay, processing, errorMe
                 fontWeight="600"
                 fontSize="md"
                 _hover={{bg: "brand.purpleDark"}}
-                onClickCapture={handleSubmit}
+                onClick={handleSubmit}
                 loading={busy}
                 loadingText={tokenizing ? "Validando tarjeta..." : "Procesando pago..."}
              >

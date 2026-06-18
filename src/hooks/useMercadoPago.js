@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
 const SDK_URL = "https://sdk.mercadopago.com/js/v2";
-const SDK_SCRIPT_ID = "mercadopago-dfk-v2";
+const SDK_SCRIPT_ID = "mercadopago-sdk-v2";
 
 function loadSdkScript(){
     return new Promise((resolve, reject) => {
