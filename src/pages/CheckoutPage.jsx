@@ -24,7 +24,7 @@ function CheckoutPage(){
     const [voucherOxxo, setVoucherOxxo] = useState(null)
     const [resultado, setResultado] = useState(null);
 
-    if(items.length === 0 && paso !== 'resultado'){
+    if(items.length === 0 && paso !== 'resultado' && !voucherOxxo){
         return(
             <Stack align="center" justify="center" minH="60vh" gap={4} px={5}>
                 <Box as={FiShoppingBag} boxSize="60px" color="brand.purpleLight"/>
@@ -155,7 +155,6 @@ function CheckoutPage(){
             }
 
             setVoucherOxxo(data.voucherUrl);
-            clear();
         }catch(error){
             console.error("Error al generar ficha OXXO: ", error);
             setErrorPago("Ocurrio un error al generar tu ficha. Intenta de nuevo.");
@@ -208,7 +207,7 @@ function CheckoutPage(){
                     <PagoOxxo
                         amountCents={totalCents}
                         onGenerar={handleGenerarOxxo}
-                        voucheUrl={voucherOxxo}
+                        voucherUrl={voucherOxxo}
                         generando={procesando}
                         errorMessage={errorPago}
                         onVolver={() => setMetodoPago(null)}

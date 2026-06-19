@@ -169,7 +169,7 @@ Deno.serve(async(req) => {
       {status: 200, headers:{ ...corsHeaders, "Content-Type": "application/json"}}
     );
   } catch(error){
-    console.error("Error inesperdo en procesar-pago-efectivo: ", err);
+    console.error("Error inesperdo en procesar-pago-efectivo: ", error);
     return jsonError("Ocurrió un error al generar tu ficha de pago.", 500);
   }
 });

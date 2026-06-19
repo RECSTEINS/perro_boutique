@@ -3,10 +3,10 @@ import { Box, Flex, Stack, HStack, Text, Button, Spinner } from "@chakra-ui/reac
 import { FiDollarSign, FiExternalLink, FiArrowLeft } from "react-icons/fi";
 import { formatPrice } from "../utils/format";
 
-function PagoOxxo({ amountCents, onGenerar, voucheUrl, generando, errorMessage, onVolver}){
+function PagoOxxo({ amountCents, onGenerar, voucherUrl, generando, errorMessage, onVolver}){
     const [iframeError, setIframeError] = useState(false);
 
-    if(voucheUrl){
+    if(voucherUrl){
         return(
             <Stack gap={4}>
                 <HStack gap={2} color="brand.purple">
@@ -30,7 +30,7 @@ function PagoOxxo({ amountCents, onGenerar, voucheUrl, generando, errorMessage, 
                     {!iframeError ? (
                         <Box
                             as="iframe"
-                            src={voucheUrl}
+                            src={voucherUrl}
                             title="Ficha de pago OXXO"
                             w="full"
                             h="600px"
@@ -50,7 +50,7 @@ function PagoOxxo({ amountCents, onGenerar, voucheUrl, generando, errorMessage, 
 
                     <Button
                         as="a"
-                        href={voucheUrl}
+                        href={voucherUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         mt={3}
