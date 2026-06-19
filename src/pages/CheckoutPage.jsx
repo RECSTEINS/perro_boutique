@@ -8,7 +8,8 @@ import { useShipping } from "../hooks/useShipping";
 import { formatPrice } from "../utils/format";
 import { supabase } from "../lib/supabase";
 import FormularioTarjeta from "../components/FormularioTarjeta";
-import { clear } from "@testing-library/user-event/dist/clear";
+import MetodoPagoSelector from "../components/MetodoPagoSelector";
+import PagoOxxo from "../components/PagoOxxo";
 
 function CheckoutPage(){
     const {items, itemCount, subtotalCents, clear} = useCart();
@@ -17,8 +18,10 @@ function CheckoutPage(){
     const shipping = useShipping();
 
     const [paso, setPaso] = useState('datos');
-    const [procesando, setProcesando] = useState(false);
     const [errorPago, setErrorPago] = useState(null);
+    const [procesando, setProcesando] = useState(false);
+    const [metodoPago, setMetodoPago] = useState(null);
+    const [voucherOxxo, setVoucherOxxo] = useState(null)
     const [resultado, setResultado] = useState(null);
 
     if(items.length === 0 && paso !== 'resultado'){
@@ -69,31 +72,39 @@ function CheckoutPage(){
             return;
         }
         setErrorPago(null);
+        setMetodoPago(null);
+        setVoucherOxxo(null)
         setPaso('pago');
     }
 
-    async function handlePagar(datosPago){
+    function construirPayloadBase(){
+        return{
+            items: items.map((it) => ({
+                variantId: it.variantId,
+                quantity: it.quantity
+            })),
+            contacto:{
+                fullName: form.fullName.trim(),
+                email: form.email.trim(),
+                phone: form.phone.replace(/\D/g, '')
+            },
+            direccion: getShippingAddress(),
+            envio:{
+                priceCents: shipping.selected.priceCents,
+                courier: shipping.selected.courier,
+                serviceType: shipping.selected.serviceType
+            }
+        };
+    }
+
+    async function handlePagarTarjeta(datosPago){
         setProcesando(true);
         setErrorPago(null);
 
         try{
             const {data, error} = await supabase.functions.invoke('procesar-pago',{
                 body:{
-                    items: items.map((it) => ({
-                        variantId: it.variantId,
-                        quantity: it.quantity
-                    })),
-                    contacto:{
-                        fullName: form.fullName.trim(),
-                        email: form.email.trim(),
-                        phone: form.phone.replace(/\D/g, '')
-                    },
-                    direccion: getShippingAddress(),
-                    envio:{
-                        priceCents: shipping.selected.priceCents,
-                        courier: shipping.selected.courier,
-                        serviceType: shipping.selected.serviceType
-                    },
+                    ...construirPayloadBase(),
                     pago:{
                         token: datosPago.token,
                         paymentMethodId: datosPago.paymentMethodId,
@@ -113,7 +124,8 @@ function CheckoutPage(){
             setResultado({
                 status,
                 statusDetail: data.statusDetail,
-                orderId: data.orderId
+                orderId: data.orderId,
+                metodo: 'tarjeta'
             });
 
             if(status === 'approved'){
@@ -128,9 +140,84 @@ function CheckoutPage(){
         }
     }
 
+    async function handleGenerarOxxo(){
+        setProcesando(true);
+        setErrorPago(null);
+
+        try{
+            const {data, error} = await supabase.functions.invoke('procesar-pago-efectivo',{
+                body: construirPayloadBase()
+            });
+            if(error || data?.error){
+                setErrorPago(data?.error || 'No se pudo generar la ficha. Intenta de nuevo.');
+                setProcesando(false);
+                return;
+            }
+
+            setVoucherOxxo(data.voucherUrl);
+            clear();
+        }catch(error){
+            console.error("Error al generar ficha OXXO: ", error);
+            setErrorPago("Ocurrio un error al generar tu ficha. Intenta de nuevo.");
+        }finally{
+            setProcesando(false);
+        }
+    }
+
     function reintentarPago(){
         setResultado(null);
+        setMetodoPago(null);
+        setVoucherOxxo(null);
         setPaso('pago');
+    }
+
+    function renderPanelMetodo(){
+        if(metodoPago === 'tarjeta'){
+            return(
+                <Box bg="white" borderRadius="card" p={5} boxShadow="0 2px 12px rgba(107, 46, 171, 0.06)">
+                    <Flex justify="space-between" align="center" mb={4}>
+                        <Heading fontFamily="heading" fontSize="lg" fontWeight="600" color="brand.purple">
+                            Tarjeta
+                        </Heading>
+                        <Button
+                            size="xs"
+                            variant="ghost"
+                            color="brand.purpleSoft"
+                            fontWeight="600"
+                            _hover={{bg:'brand.purpleLight'}}
+                            onClick={() => setMetodoPago(null)}
+                        >
+                            <Box as={FiArrowLeft} boxSize="13px" mr={1}/>
+                            Cambiar
+                        </Button>
+                    </Flex>
+                    <FormularioTarjeta
+                        amountCents={totalCents}
+                        payerEmail={form.email.trim()}
+                        onPay={handlePagarTarjeta}
+                        processing={procesando}
+                        errorMessage={errorPago}
+                    />
+                </Box>
+            );
+        }
+
+        if(metodoPago === 'oxxo'){
+            return(
+                <Box bg="white" borderRadius="card" p={5} boxShadow="0 2px 12px rgba(107, 46, 171, 0.06)">
+                    <PagoOxxo
+                        amountCents={totalCents}
+                        onGenerar={handleGenerarOxxo}
+                        voucheUrl={voucherOxxo}
+                        generando={procesando}
+                        errorMessage={errorPago}
+                        onVolver={() => setMetodoPago(null)}
+                    />
+                </Box>
+            )
+        }
+
+        return null;
     }
 
     return(
@@ -166,7 +253,7 @@ function CheckoutPage(){
                             {paso === 'datos' ? 'Finalizar compra' : 'Datos de pago'}
                         </Heading>
                         <Text fontSize="sm" color="brand.purpleSoft">
-                            {paso === 'datos' ? 'Completa tus datos para enviar tu pedido 🐾' : 'Ingresa los datos de tu tarjeta de forma segura 🔒'}
+                            {paso === 'datos' ? 'Completa tus datos para enviar tu pedido' : 'Elige como quieres pagar tu pedido'}
                         </Text>
                     </Stack>
 
@@ -182,20 +269,16 @@ function CheckoutPage(){
                                 <>
                                     <ResumenEnvio
                                         form={form}
-                                        onEditar={() => setPaso('datos')}
+                                        onEditar={() => { setPaso('datos'); setMetodoPago(null); }}
                                     />
-                                    <Box bg="white" borderRadius="card" p={5} boxShadow="0 2px 12px rgba(107, 46, 171, 0.06)">
-                                        <Heading fontFamily="heading" fontSize="lg" fontWeight="600" color="brand.purple" mb={4}>
-                                            Tarjeta
-                                        </Heading>
-                                        <FormularioTarjeta
-                                            amountCents={totalCents}
-                                            payerEmail={form.email.trim()}
-                                            onPay={handlePagar}
-                                            processing={procesando}
-                                            errorMessage={errorPago}
+                                    {metodoPago === null ? (
+                                        <MetodoPagoSelector
+                                            onSelect={(id) => {setMetodoPago(id); setErrorPago(null);}}
+                                            cpDestino={form.postalCode}
                                         />
-                                    </Box>
+                                    ) : (
+                                        renderPanelMetodo()
+                                    )}
                                 </>
                             )}
                         </Stack>
