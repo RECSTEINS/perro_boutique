@@ -1,7 +1,7 @@
 //Edge Function: procesar-pago-efectivo
 //Proceso por el cual generamos el pago mediante OXXO
 
-import { createClient } = from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -134,7 +134,7 @@ Deno.serve(async(req) => {
 
     const idempotencyKey = `order-oxxo-${orden.id}`;
 
-    const mpRes = await fetch("https://api.mercadopago.com/v1/payments"{
+    const mpRes = await fetch("https://api.mercadopago.com/v1/payments",{
       method: "POST",
       headers:{
         "Content-Type": "application/json",
@@ -165,7 +165,7 @@ Deno.serve(async(req) => {
         orderId: orden.id,
         paymentId: pagoData.id,
         voucherUrl
-      });
+      }),
       {status: 200, headers:{ ...corsHeaders, "Content-Type": "application/json"}}
     );
   } catch(error){
