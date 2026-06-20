@@ -100,12 +100,24 @@ export function AuthProvider({ children }) {
         await supabase.auth.signOut();
     }
 
+    async function signInWithGoogle(){
+        const {data, error} = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options:{
+                redirectTo: `${window.location.origin}/`,
+            }
+        })
+        return {data, error};
+    }
+    
+
     const value = {
         user,
         profile,
         loading,
         signIn,
         signUp,
+        signInWithGoogle,
         signOut,
         isAuthenticated: !!user,
         isAdmin: profile?.role === 'admin' && profile?.is_active,

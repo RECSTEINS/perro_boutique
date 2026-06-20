@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { Box, Button, Heading, Input, Stack, Text, Link as ChakraLink } from '@chakra-ui/react';
+import { Box, Button, Flex, Heading, Input, Stack, Text, Link as ChakraLink } from '@chakra-ui/react';
 import { useAuth } from '../lib/AuthContext';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 function RegisterPage(){
     const navigate = useNavigate();
@@ -119,6 +120,15 @@ function RegisterPage(){
                         </Button>
                     </Stack>
                 </form>
+
+                <Flex align="center" gap={3}>
+                    <Box flex="1" h="1px" bg="brand.purpleLight"/>
+                    <Text fontSize="xs" color="brand.purpleSoft" fontWeight="600">
+                        o
+                    </Text>
+                    <Box flex="1" h="1px" bg="brand.purpleLight"/>
+                </Flex>
+                <GoogleSignInButton/>
 
                 <Text fontSize="sm" textAlign="center" color="brand.purpleSoft">
                     ¿Ya tienes cuenta?{' '}
