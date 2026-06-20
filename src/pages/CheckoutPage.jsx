@@ -10,6 +10,7 @@ import { supabase } from "../lib/supabase";
 import FormularioTarjeta from "../components/FormularioTarjeta";
 import MetodoPagoSelector from "../components/MetodoPagoSelector";
 import PagoOxxo from "../components/PagoOxxo";
+import PagoTransferencia from "../components/PagoTransferencia";
 
 function CheckoutPage(){
     const {items, itemCount, subtotalCents, clear} = useCart();
@@ -22,9 +23,10 @@ function CheckoutPage(){
     const [procesando, setProcesando] = useState(false);
     const [metodoPago, setMetodoPago] = useState(null);
     const [voucherOxxo, setVoucherOxxo] = useState(null)
+    const [datosTransferencia, setDatosTransferencia] = useState(null);
     const [resultado, setResultado] = useState(null);
 
-    if(items.length === 0 && paso !== 'resultado' && !voucherOxxo){
+    if(items.length === 0 && paso !== 'resultado' && !voucherOxxo && !datosTransferencia){
         return(
             <Stack align="center" justify="center" minH="60vh" gap={4} px={5}>
                 <Box as={FiShoppingBag} boxSize="60px" color="brand.purpleLight"/>
@@ -163,6 +165,29 @@ function CheckoutPage(){
         }
     }
 
+    async function handleRegistrarTransferencia(){
+        setProcesando(true);
+        setErrorPago(null);
+
+        try{
+            const {data, error} = await supabase.functions.invoke('crear-order-transferencia',{
+                body: construirPayloadBase()
+            });
+            if(error || data?.error){
+                setErrorPago(data?.error || 'No se pudo registrar tu pedido. Intenta de nuevo.');
+                setProcesando(false);
+                return;
+            }
+
+            setDatosTransferencia(data);
+        } catch(error){
+            console.error("Error al registrar transferencia: ", error);
+            setErrorPago("Ocurrió un error al registrar tu pedido. Intenta de nuevo.")
+        }finally{
+            setProcesando(false);
+        }
+    }
+
     function reintentarPago(){
         setResultado(null);
         setMetodoPago(null);
@@ -209,6 +234,21 @@ function CheckoutPage(){
                         onGenerar={handleGenerarOxxo}
                         voucherUrl={voucherOxxo}
                         generando={procesando}
+                        errorMessage={errorPago}
+                        onVolver={() => setMetodoPago(null)}
+                    />
+                </Box>
+            )
+        }
+
+        if(metodoPago === 'transferencia'){
+            return(
+                <Box bg="white" borderRadius="card" p={5} boxShadow="0 2px 12px rgba(107, 46, 171, 0.06)">
+                    <PagoTransferencia
+                        amountCents={totalCents}
+                        onRegistrar={handleRegistrarTransferencia}
+                        datos={datosTransferencia}
+                        registrando={procesando}
                         errorMessage={errorPago}
                         onVolver={() => setMetodoPago(null)}
                     />

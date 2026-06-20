@@ -29,11 +29,11 @@ function MetodoPagoSelector({ onSelect, cpDestino }){
             disponible: true
         },
         {
-            id:"tranferencia",
+            id:"transferencia",
             icon: FiRepeat,
             titulo: "Transferencia bancaria (SPEI)",
             subtitulo: "Proximamente",
-            disponible: false
+            disponible: true
         },
         {
             id:"contra_entrega",
