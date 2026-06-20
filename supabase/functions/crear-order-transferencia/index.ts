@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: {...corsHeaders, "Content-Type": "application/json"}}
     );
   } catch(error){
-    console.error("Error inesperado en crear-orden-transferencia: ", error);
+    console.error("Error inesperado en crear-order-transferencia: ", error);
     return jsonError("Ocurrió un error al registrar tu pedido.", 500);
   }
 });
