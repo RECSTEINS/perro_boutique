@@ -2,7 +2,12 @@ import { Box, Flex, Stack, HStack, Text, Circle } from "@chakra-ui/react";
 import { FiCreditCard, FiDollarSign, FiRepeat, FiMapPin, FiExternalLink, FiChevronRight } from "react-icons/fi";
 
 
-const CPS_CANCUN = ["77500", "77510", "77520",  "77533", "77535", "77560"];
+const CPS_CANCUN = ["77500", "77503", "77504",  "77505", "77506", "77507",
+    "77508","77509", "77510", "77513", "77514", "77515", "77516", "77517",
+    "77518", "77519", "77520", "77524", "77525", "77526", "77527", "77528",
+    "77530", "77533", "77534", "77535", "77536", "77537", "77538", "77539",
+    "77550", "77567", "77569"
+];
 
 function metodoContraEntregaDisponible(cpDestino){
     if(!cpDestino) return false;
