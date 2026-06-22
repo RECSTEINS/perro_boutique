@@ -46,7 +46,7 @@ function MetodoPagoSelector({ onSelect, cpDestino }){
             titulo: "Pago contra entrega",
             subtitulo: contraEntregaOk ? "Disponible en tu zona (Cancún) · acordamos punto por WhatsApp"
                 : "Solo disponible en Cancún",
-            disponible: false,
+            disponible: true,
             soloInfo: !contraEntregaOk
         },
         {

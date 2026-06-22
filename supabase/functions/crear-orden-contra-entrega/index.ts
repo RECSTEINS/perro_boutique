@@ -83,8 +83,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    const shippingCents = Number(envio.priceCents) || 0;
-    const totalCents = subtotalCents + shippingCents;
+    const shippingCents = 0;
+    const totalCents = subtotalCents;
 
     const {data: orden, error: errOrden} = await supabaseAdmin.from("orders")
       .insert({
@@ -93,11 +93,11 @@ Deno.serve(async (req) => {
         status: "pendiente_pago",
         payment_method: "contra_entrega",
         subtotal_cents: subtotalCents,
-        shipping_cents: shipping_cents,
+        shipping_cents: shippingCents,
         total_cents: totalCents,
         shipping_address: {...direccion, fullName: contacto.fullName},
-        shipping_carrier: envio.courier || null,
-        shipping_service: envio.serviceType || null
+        shipping_carrier: "Entrega personal",
+        shipping_service: "Contra entrega (Cancún)"
       }).select("id").single();
     
     if(errOrden || !orden){
@@ -139,6 +139,7 @@ Deno.serve(async (req) => {
 
 function jsonError(mensaje: string, status: number){
   return new Response(
-    {status, headers: {...corsHeaders, "Content-Type": "application/json"}}
+    JSON.stringify({ error: mensaje}),
+    { status, headers: { ...corsHeaders, "Content-Type": "application/json"}}
   );
 }
