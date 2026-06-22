@@ -11,6 +11,7 @@ import FormularioTarjeta from "../components/FormularioTarjeta";
 import MetodoPagoSelector from "../components/MetodoPagoSelector";
 import PagoOxxo from "../components/PagoOxxo";
 import PagoTransferencia from "../components/PagoTransferencia";
+import PagoContraEntrega from "../components/PagoContraEntrega";
 
 function CheckoutPage(){
     const {items, itemCount, subtotalCents, clear} = useCart();
@@ -24,9 +25,10 @@ function CheckoutPage(){
     const [metodoPago, setMetodoPago] = useState(null);
     const [voucherOxxo, setVoucherOxxo] = useState(null)
     const [datosTransferencia, setDatosTransferencia] = useState(null);
+    const [datosContraEntrega, setDatosContraEntrega] = useState(null);
     const [resultado, setResultado] = useState(null);
 
-    if(items.length === 0 && paso !== 'resultado' && !voucherOxxo && !datosTransferencia){
+    if(items.length === 0 && paso !== 'resultado' && !voucherOxxo && !datosTransferencia && !datosContraEntrega){
         return(
             <Stack align="center" justify="center" minH="60vh" gap={4} px={5}>
                 <Box as={FiShoppingBag} boxSize="60px" color="brand.purpleLight"/>
@@ -53,7 +55,8 @@ function CheckoutPage(){
         )
     }
 
-    const shippingCents = shipping.selected ? shipping.selected.priceCents : 0;
+    const esContraEntrega = metodoPago === 'contra_entrega';
+    const shippingCents = esContraEntrega ? 0 : (shipping.selected ? shipping.selected.priceCents : 0);
     const totalCents = subtotalCents + shippingCents;
 
     function handleCalculaEnvio(){
@@ -157,6 +160,7 @@ function CheckoutPage(){
             }
 
             setVoucherOxxo(data.voucherUrl);
+            //clear();
         }catch(error){
             console.error("Error al generar ficha OXXO: ", error);
             setErrorPago("Ocurrio un error al generar tu ficha. Intenta de nuevo.");
@@ -180,9 +184,34 @@ function CheckoutPage(){
             }
 
             setDatosTransferencia(data);
+            //clear();
         } catch(error){
             console.error("Error al registrar transferencia: ", error);
             setErrorPago("Ocurrió un error al registrar tu pedido. Intenta de nuevo.")
+        }finally{
+            setProcesando(false);
+        }
+    }
+
+    async function handleRegistrarContraEntrega(){
+        setProcesando(true);
+        setErrorPago(null);
+
+        try{
+            const {data, error} = await supabase.functions.invoke('crear-orden-contra-entrega',{
+                body: construirPayloadBase()
+            });
+            if(error || data?.error){
+                setErrorPago(data?.error || 'No se pudo registrar tu pedido. Intenta de nuevo.');
+                setProcesando(false);
+                return;
+            }
+
+            setDatosContraEntrega(data);
+            //clear();
+        }catch(error){
+            console.error("Error al registrar contra entrega: ", error);
+            setErrorPago("Ocurrió un error al registrar tu pedido. Intenta de nuevo.");
         }finally{
             setProcesando(false);
         }
@@ -254,6 +283,21 @@ function CheckoutPage(){
                     />
                 </Box>
             )
+        }
+
+        if(metodoPago === 'contra_entrega'){
+            return(
+                <Box bg="white" borderRadius="card" p={5} boxShadow="0 2px 12px rgba(107, 46, 171, 0.06)">
+                    <PagoContraEntrega
+                        amountCents={totalCents}
+                        onRegistrar={handleRegistrarContraEntrega}
+                        datos={datosContraEntrega}
+                        registrando={procesando}
+                        errorMessage={errorPago}
+                        onVolver={() => setMetodoPago(null)}
+                    />
+                </Box>
+            );
         }
 
         return null;
