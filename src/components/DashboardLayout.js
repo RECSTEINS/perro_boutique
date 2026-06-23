@@ -1,10 +1,11 @@
 import { Box, Flex, HStack, Stack, Text, Circle, Image } from '@chakra-ui/react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { FiTag, FiFolder, FiUsers, FiBarChart2, FiLogOut, FiHome } from 'react-icons/fi';
+import { FiTag, FiFolder, FiUsers, FiBarChart2, FiLogOut, FiHome, FiShoppingBag } from 'react-icons/fi';
 import { useAuth } from '../lib/AuthContext';
 import logo from '../assets/logo_sin_fondo.jpg'
 
 const navItems = [
+    { label: 'Pedidos', to: '/admin/pedidos', icon: FiShoppingBag},
     { label: 'Productos', to: '/admin/productos', icon: FiTag},
     { label: 'Categorías', to: '/admin/categorias', icon: FiFolder},
     { label: 'Usuarios', to: '/admin/usuarios', icon: FiUsers, soon: true},

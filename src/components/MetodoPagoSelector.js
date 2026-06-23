@@ -1,4 +1,4 @@
-import { Box, Flex, Stack, HStack, Text, Circle } from "@chakra-ui/react";
+import { Box, Flex, Stack, Text, Circle } from "@chakra-ui/react";
 import { FiCreditCard, FiDollarSign, FiRepeat, FiMapPin, FiExternalLink, FiChevronRight } from "react-icons/fi";
 
 
