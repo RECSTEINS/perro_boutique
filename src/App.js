@@ -4,7 +4,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import RequireAdmin from './components/RequireAdmin';
 import DashboardLayout from './components/DashboardLayout';
-import CartDrawer, { CartToaster } from './components/CartDrawer';
+import CartDrawer from './components/CartDrawer';
 import Home from './pages/Home';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -19,6 +19,8 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import PaymentResultPage from './pages/PaymentResultPage';
 
+import AppToaster from './utils/toaster';
+
 function PublicLayout({children}){
   return(
     <Flex direction="column" minH="100vh" bg="brand.cream">
@@ -28,7 +30,7 @@ function PublicLayout({children}){
       </Box>
       <Footer/>
       <CartDrawer/>
-      <CartToaster/>
+      <AppToaster/>
     </Flex>
   );
 }
