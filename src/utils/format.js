@@ -18,3 +18,13 @@ export function formatPriceRange(variants) {
     if (min === max) return formatPrice(min);
     return `desde ${formatPrice(min)}`;
 }
+
+export function formatDate(iso){
+    if(!iso) return '—';
+    return new Date(iso).toLocaleString('es-MX', {
+        day: '2-digit',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}

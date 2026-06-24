@@ -13,6 +13,7 @@ import ProductPage from './pages/ProductPage';
 import ProductsList from './pages/admin/ProductsList';
 import ProductForm from './pages/admin/ProductForm';
 import CategoriesList from './pages/admin/CategoriesList';
+import OrdersList from './pages/admin/OrdenList';
 import CatalogPage from './pages/CatalogPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
@@ -51,7 +52,8 @@ function App() {
           </RequireAdmin>
         }
       >
-        <Route index element={<Navigate to="productos" replace/>}/>
+        <Route index element={<Navigate to="pedidos" replace/>}/>
+        <Route path='pedidos' element={<OrdersList/>}/>
         <Route path='productos' element={<ProductsList/>}/>
         <Route path='productos/nuevo' element={<ProductForm/>}/>
         <Route path='productos/:id/editar' element={<ProductForm/>}/>
