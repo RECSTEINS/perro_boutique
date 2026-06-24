@@ -2,6 +2,7 @@ import { Box, Flex, HStack, Stack, Text, Circle, Image } from '@chakra-ui/react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { FiTag, FiFolder, FiUsers, FiBarChart2, FiLogOut, FiHome, FiShoppingBag } from 'react-icons/fi';
 import { useAuth } from '../lib/AuthContext';
+import AppToaster  from '../utils/toaster';
 import logo from '../assets/logo_sin_fondo.jpg'
 
 const navItems = [
@@ -209,6 +210,7 @@ function DashboardLayout(){
             <Box as="main" flex="1" overflowX="auto">
                 <Outlet/>
             </Box>
+            <AppToaster/>
         </Flex>
     )
 }

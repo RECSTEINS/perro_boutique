@@ -1,29 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
 import { Box, Flex, Stack, HStack, Heading, Text, Image, Button, Circle, IconButton, Link as ChackraLink } from "@chakra-ui/react";
 import { FiX, FiShoppingBag, FiMinus, FiPlus } from "react-icons/fi";
 import { useCart } from "../lib/CartContext";
 import { formatPrice } from '../utils/format'
-
-const MOBILE_BREAKPOINT = 768;
-
-function useToastPosition(){
-    const getPosition = () => typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT
-        ? 'bottom-center' : 'top-center';
-
-    const [position, setPosition] = useState(getPosition);
-
-    useEffect(() => {
-        function handleResize(){
-            setPosition(getPosition());
-        }
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    return position;
-}
 
 function CartLine({item}){
     const {updateQuantity, removeItem} = useCart();
@@ -302,19 +282,6 @@ function CartDrawer(){
                 )}
             </Flex>
         </>
-    );
-}
-
-export function CartToaster(){
-    const position = useToastPosition();
-
-    return(
-        <Toaster
-            position={position}
-            gutter={12}
-            containerStyle={{top:80, bottom:24}}
-            toastOptions={{duration: 3000}}
-        />
     );
 }
 

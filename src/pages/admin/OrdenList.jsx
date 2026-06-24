@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Box, Flex, Heading, Text, Stack, HStack, Spinner, Input, NativeSelect, Badge, Table, Image, Circle } from "@chakra-ui/react";
-import { FiX } from 'react-icons/fi';
+import { Box, Flex, Heading, Text, Stack, HStack, Spinner, Input, NativeSelect, Badge, Table, Image, Circle, Button } from "@chakra-ui/react";
+import { FiX, FiCheck } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { formatPrice, formatDate } from '../../utils/format';
 
@@ -36,16 +37,19 @@ const ESTADO_CONFIG = {
 function EstadoBadge({status}){
     const cfg = ESTADO_CONFIG[status] || {label: status, palette: 'gray'};
     return(
-        <Badge colorPallete={cfg.palette} variant="subtle" borderRadius="md" px={2.5} py={1}>
+        <Badge colorPalette={cfg.palette} variant="subtle" borderRadius="md" px={2.5} py={1}>
             {cfg.label}
         </Badge>
     )
 }
 
-function OrderDetailDrawer({ order, onClose }){
+function OrderDetailDrawer({ order, onClose, onMarcadoPagado }){
     const [items, setItems] = useState([]);
     const [loadingItems, setLoadingItems] = useState(true);
     const [itemsError, setItemsError] = useState(null);
+
+    const [confirmando, setConfirmando] = useState(false);
+    const [marcando, setMarcando] = useState(false);
 
     useEffect(() => {
         let mounted = true;
@@ -85,8 +89,44 @@ function OrderDetailDrawer({ order, onClose }){
         };
     }, [order.id]);
 
+    useEffect(() => {
+        setConfirmando(false);
+    }, [order.id]);
+
     const addr = parseAddress(order.shipping_address);
     const nombre = addr?.fullName || '—';
+    const esPendiente = order.status === 'pendiente_pago';
+
+    async function handleMarcarPagado(){
+        setMarcando(true);
+        const {data, error} = await supabase.functions.invoke(
+            'marcar-orden-pagada',
+            {body:{orderId: order.id}}
+        );
+
+        setMarcando(false);
+
+        if(error){
+            let mensaje = 'No se pudo marcar el pedido como pagado.';
+            try{
+                const ctx = await error.context?.json?.();
+                if(ctx?.error) mensaje = ctx.error;
+            } catch{
+
+            }
+            toast.error(mensaje);
+            return;
+        }
+
+        if(!data?.ok){
+            toast.error('La orden no se pudo marcar como pagada.');
+            return;
+        }
+
+        toast.success('Pedido marcado como pagado. Stock descontado.');
+        setConfirmando(false);
+        onMarcadoPagado(order.id);
+    }
 
     return(
         <>
@@ -308,12 +348,72 @@ function OrderDetailDrawer({ order, onClose }){
                                 </Text>
                             </Flex>
                         </Stack>
-                        {/**/}
                     </Stack>
                 </Box>
+
+                {esPendiente && (
+                    <Box
+                        px={5}
+                        py={4}
+                        borderTop="1px solid"
+                        borderColor="brand.purpleLight"
+                        flexShrink={0}
+                    >
+                        {!confirmando ? (
+                            <Button
+                                w="full"
+                                bg="brand.purple"
+                                color="white"
+                                borderRadius="pill"
+                                fontFamily="heading"
+                                fontWeight="600"
+                                _hover={{bg: 'brand.purpleDark'}}
+                                onClick={() => setConfirmando(true)}
+                            >
+                                <Box as={FiCheck} boxSize="18px" mr={2}/>
+                                Marcar como pagado
+                            </Button>
+                        ) : (
+                            <Stack gap={3}>
+                                <Text fontSize="sm" color="gray.700" textAlign="center">
+                                    ¿Confirmas que recibiste el pago de este pedido?
+                                    Se descontará el stock
+                                </Text>
+                                <HStack gap={2}>
+                                    <Button
+                                        flex="1"
+                                        variant="outline"
+                                        borderColor="brand.purpleLight"
+                                        color="brand.purpleSoft"
+                                        borderRadius="pill"
+                                        fontWeight="600"
+                                        _hover={{bg: 'brand.purpleLight'}}
+                                        onClick={() => setConfirmando(false)}
+                                        disabled={marcando}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button
+                                        flex="1"
+                                        bg="brand.purple"
+                                        color="white"
+                                        borderRadius="pill"
+                                        fontWeight="600"
+                                        _hover={{bg: 'brand.purpleDark'}}
+                                        onClick={handleMarcarPagado}
+                                        loading={marcando}
+                                        loadingText="Marcando..."
+                                    >
+                                        Sí, confirmar
+                                    </Button>
+                                </HStack>
+                            </Stack>
+                        )}
+                    </Box>
+                )}
             </Flex>
         </>
-    )
+    );
 }
 
 function OrdersList(){
@@ -325,7 +425,7 @@ function OrdersList(){
 
     const [filtroEstado, setFiltroEstado] = useState('');
     const [filtroMetodo, setFiltroMetodo] = useState('');
-    const [busqueda, setBusqueda] = useState(null);
+    const [busqueda, setBusqueda] = useState('');
 
     useEffect(() => {
         let mounted = true;
@@ -355,6 +455,17 @@ function OrdersList(){
             mounted = false;
         };
     }, []);
+
+    function handleMarcadoPagado(orderId){
+        setOrders((prev) =>
+            prev.map((o) =>
+                o.id === orderId ? {...o, status: 'pagado'} : o
+            )
+        );
+        setPedidoSel((prev) =>
+            prev && prev.id === orderId ? {...prev, status: 'pagado'} : prev
+        );
+    }
 
     const pedidosFiltrados = useMemo(() => {
         const q = busqueda.trim().toLowerCase();
@@ -413,7 +524,7 @@ function OrdersList(){
 
                 <NativeSelect.Root size="sm" maxW="200px">
                     <NativeSelect.Field 
-                        value={filtroEstado} 
+                        value={filtroMetodo} 
                         onChange={(e) => setFiltroMetodo(e.target.value)}
                     >
                         <option value="">Todos los métodos</option>
@@ -469,7 +580,7 @@ function OrdersList(){
                                 <Table.ColumnHeader>Cliente</Table.ColumnHeader>
                                 <Table.ColumnHeader>Método</Table.ColumnHeader>
                                 <Table.ColumnHeader>Estado</Table.ColumnHeader>
-                                <Table.ColumnHeader textAlign="end">Total</Table.ColumnHeader>
+                                <Table.ColumnHeader>Total</Table.ColumnHeader>
                                 <Table.ColumnHeader>Fecha</Table.ColumnHeader>
                             </Table.Row>
                         </Table.Header>
@@ -525,6 +636,7 @@ function OrdersList(){
                 <OrderDetailDrawer
                     order={pedidoSel}
                     onClose={() => setPedidoSel(null)}
+                    onMarcadoPagado={handleMarcadoPagado}
                 />
             )}
         </Box>
