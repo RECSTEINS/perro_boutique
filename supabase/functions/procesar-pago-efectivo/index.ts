@@ -2,6 +2,7 @@
 //Proceso por el cual generamos el pago mediante OXXO
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { calcularPesoKg, cotizarEnvio } from "../_shared/enviosperros.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,7 +34,7 @@ Deno.serve(async(req) => {
 
     const variantIds = items.map((it: any) => it.variantId);
     const {data: variantesReales, error: errVariantes} = await supabaseAdmin.from("product_variants")
-      .select("id, size, price_cents, stock, products(name)").in("id", variantIds);
+      .select("id, size, price_cents, stock, weight_grams, products(name)").in("id", variantIds);
 
     if(errVariantes || !variantesReales){
       console.error("Error al leer variantes: ", errVariantes);
@@ -61,11 +62,47 @@ Deno.serve(async(req) => {
         productName: variante.products?.name || "Producto",
         size: variante.size,
         priceCents: precioReal,
+        weightGrams: variante.weight_grams,
         quantity: item.quantity
       });
     }
 
-    const shippingCents = Number(envio.priceCents) || 0;
+    const itemsParaEnvio = itemsValidados.map((it) => ({
+      weightGrams: it.weightGrams,
+      quantity: it.quantity
+    }));
+    const pesoKg = calcularPesoKg(itemsParaEnvio);
+
+    const apiKeyEnvios = Deno.env.get("ENVIOSPERROS_API_KEY");
+    if(!apiKeyEnvios){
+      return jsonError("Falta configurar el servicio de envíos.", 500);
+    }
+
+    let opcionesEnvio;
+    try{
+      opcionesEnvio = await cotizarEnvio(direccion.postal_code, pesoKg, apiKeyEnvios);
+    } catch(error){
+      console.error("No se pudo revalidar el envío: ", error);
+      return jsonError("No pudimos confirmar el costo de envío. Recarga e intenta de nuevo.", 503);
+    }
+
+    const opcionElegida = opcionesEnvio.find(
+      (op) => op.courier === envio.courier && op.serviceType === envio.serviceType
+    );
+
+    if(!opcionElegida){
+      return jsonError("La opción de envío ya no esta disponible. Recarga e intenta de nuevo.", 409);
+    }
+
+    const enviadoCents = Number(envio.priceCents) || 0;
+    const diferencia = Math.abs(opcionElegida.priceCents - enviadoCents);
+
+    if(diferencia > 100){
+      console.error(`Envío no coincide. Front: ${enviadoCents}, real: ${opcionElegida.priceCents}, email: ${contacto.email}`);
+      return jsonError("El costo de envío cambió. Recarga el carrito para ver el precio actualizado.", 409)
+    }
+
+    const shippingCents = opcionElegida.priceCents;
     const totalCents = subtotalCents + shippingCents;
     const totalPesos = totalCents / 100;
 
@@ -148,13 +185,23 @@ Deno.serve(async(req) => {
 
     if(!mpRes.ok){
       console.error("Error de Mercado Pago (OXXO): ", mpRes.status, pagoData);
-      await supabaseAdmin.from("orders").update({ status: "pago_fallido"}).eq("id", orden.id);
+
+      const {error: errFallido} = await supabaseAdmin.from("orders")
+        .update({ status: "pago_fallido"}).eq("id", orden.id);
+
+      if(errFallido){
+        console.error("No se pudo marcar la orden OXXO como pago_fallido: ", errFallido);
+      }
       return jsonError(
         pagoData?.message || "No se pudo generar la ficha de OXXO. Intenta de nuevo.", 502
       );
     }
 
-    await supabaseAdmin.from("orders").update({mp_payment_id: String(pagoData.id)}).eq("id", orden.id);
+    const {error: errPaymentId} = await supabaseAdmin.from("orders")
+      .update({mp_payment_id: String(pagoData.id)}).eq("id", orden.id);
+    if(errPaymentId){
+      console.error("No se guardó mp_payment_id (OXXO): ", orden.id, errPaymentId);
+    }
 
     const voucherUrl = pagoData?.transaction_details?.external_resource_url || null;
 
