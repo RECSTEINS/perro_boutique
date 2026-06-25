@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Box, Flex, Heading, Text, Stack, HStack, Spinner, Input, NativeSelect, Badge, Table, Image, Circle, Button } from "@chakra-ui/react";
-import { FiX, FiCheck } from 'react-icons/fi';
+import { FiX, FiCheck, FiTruck } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { formatPrice, formatDate } from '../../utils/format';
@@ -43,13 +43,16 @@ function EstadoBadge({status}){
     )
 }
 
-function OrderDetailDrawer({ order, onClose, onMarcadoPagado }){
+function OrderDetailDrawer({ order, onClose, onMarcadoPagado, onGuiaGenerada }){
     const [items, setItems] = useState([]);
     const [loadingItems, setLoadingItems] = useState(true);
     const [itemsError, setItemsError] = useState(null);
 
     const [confirmando, setConfirmando] = useState(false);
     const [marcando, setMarcando] = useState(false);
+
+    const [confirmandoGuia, setConfirmandoGuia] = useState(false);
+    const [generandoGuia, setGenerandoGuia] = useState(false);
 
     useEffect(() => {
         let mounted = true;
@@ -91,11 +94,13 @@ function OrderDetailDrawer({ order, onClose, onMarcadoPagado }){
 
     useEffect(() => {
         setConfirmando(false);
+        setConfirmandoGuia(false);
     }, [order.id]);
 
     const addr = parseAddress(order.shipping_address);
     const nombre = addr?.fullName || '—';
     const esPendiente = order.status === 'pendiente_pago';
+    const puedeGenerarGuia = order.status === 'pagado' && order.payment_method !== 'contra_entrega' && !order.tracking_number;
 
     async function handleMarcarPagado(){
         setMarcando(true);
@@ -126,6 +131,36 @@ function OrderDetailDrawer({ order, onClose, onMarcadoPagado }){
         toast.success('Pedido marcado como pagado. Stock descontado.');
         setConfirmando(false);
         onMarcadoPagado(order.id);
+    }
+
+    async function handleGenerarGuia(){
+        setGenerandoGuia(true);
+        const {data, error} = await supabase.functions.invoke(
+            'crear-guia-envio',
+            {body:{orderId: order.id}}
+        );
+
+        setGenerandoGuia(false);
+
+        if(error){
+            let mensaje = 'No se pudo generar la guía.';
+            try{
+                const ctx = await error.context?.json?.();
+                if(ctx?.error) mensaje = ctx.error;
+            } catch{
+                console.error('Ocurrio un error D:')
+            }
+            toast.error(mensaje);
+            return;
+        }
+        if(!data?.ok){
+            toast.error('La guía no se pudo generar.');
+            return;
+        }
+
+        toast.success(`Guía generada: Rastreo: ${data.trackingNumber}`);
+        setConfirmandoGuia(false);
+        onGuiaGenerada(order.id, data.trackingNumber);
     }
 
     return(
@@ -411,6 +446,92 @@ function OrderDetailDrawer({ order, onClose, onMarcadoPagado }){
                         )}
                     </Box>
                 )}
+
+                {puedeGenerarGuia && (
+                    <Box
+                        px={5}
+                        py={4}
+                        borderTop="1px solid"
+                        borderColor="brand.purpleLight"
+                        flexShrink={0}
+                    >
+                        {!confirmandoGuia ? (
+                            <Button
+                                w="full"
+                                bg="brand.purple"
+                                color="white"
+                                borderRadius="pill"
+                                fontFamily="heading"
+                                fontWeight="600"
+                                _hover={{bg:'brand.purpleDark'}}
+                                onClick={() => setConfirmandoGuia(true)}
+                            >
+                                <Box as={FiTruck} boxSize="18px" mr={2}/>
+                                Generar guía
+                            </Button>
+                        ) : (
+                            <Stack gap={3}>
+                                <Text fontSize="sm" color="gray.700" textAlign="center">
+                                    Se generará una guía real y se descontará saldo de 
+                                    Envíosperros. ¿Continuar?
+                                </Text>
+                                <HStack gap={2}>
+                                    <Button
+                                        flex="1"
+                                        variant="outline"
+                                        borderColor="brand.purpleLight"
+                                        color="brand.purpleSoft"
+                                        borderRadius="pill"
+                                        fontWeight="600"
+                                        _hover={{bg:'brand.purpleLight'}}
+                                        onClick={() => setConfirmandoGuia(false)}
+                                        disabled={generandoGuia}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button
+                                        flex="1"
+                                        bg="brand.purple"
+                                        color="white"
+                                        borderRadius="pill"
+                                        fontWeight="600"
+                                        _hover={{bg:'brand.purpleDark'}}
+                                        onClick={handleGenerarGuia}
+                                        loading={generandoGuia}
+                                        loadingText="Generando..."
+                                    >
+                                        Sí, generar
+                                    </Button>
+                                </HStack>
+                            </Stack>
+                        )}
+                    </Box>
+                )}
+
+                {order.tracking_number && (
+                    <Box
+                        px={5}
+                        py={4}
+                        borderTop="1px solid"
+                        borderColor="brand.purpleLight"
+                        flexShrink={0}
+                    >
+                        <Stack gap={1}>
+                            <Text
+                                fontSize="11px"
+                                fontWeight="700"
+                                color="brand.purpleSoft"
+                                letterSpacing="0.5px"
+                                textTransform="uppercase"
+                            >
+                                Número de rastreo
+                            </Text>
+                            <Text fontSize="sm" fontFamily="mono" color="brand.purple" fontWeight="600" wordBreak="break-all">
+                                {order.tracking_number}
+                            </Text>
+                        </Stack>
+                    </Box>
+                )}
             </Flex>
         </>
     );
@@ -436,7 +557,7 @@ function OrdersList(){
 
             const {data, error} = await supabase.from('orders')
                 .select(
-                    'id, email, phone, status, payment_method, subtotal_cents, shipping_cents, total_cents, shipping_address, shipping_carrier, shipping_service, created_at'
+                    'id, email, phone, status, payment_method, subtotal_cents, shipping_cents, total_cents, shipping_address, shipping_carrier, shipping_service, tracking_number, created_at'
                 ).order('created_at', {ascending: false});
 
             if(!mounted) return;
@@ -464,6 +585,17 @@ function OrdersList(){
         );
         setPedidoSel((prev) =>
             prev && prev.id === orderId ? {...prev, status: 'pagado'} : prev
+        );
+    }
+
+    function handleGuiaGenerada(orderId, trackingNumber){
+        setOrders((prev) =>
+            prev.map((o) =>
+                o.id === orderId ? {...o, status: 'enviado', tracking_number: trackingNumber} : o
+            )
+        );
+        setPedidoSel((prev) =>
+            prev && prev.id === orderId ? {...prev, status: 'enviado', tracking_number: trackingNumber} : prev
         );
     }
 
@@ -637,6 +769,7 @@ function OrdersList(){
                     order={pedidoSel}
                     onClose={() => setPedidoSel(null)}
                     onMarcadoPagado={handleMarcadoPagado}
+                    onGuiaGenerada={handleGuiaGenerada}
                 />
             )}
         </Box>
