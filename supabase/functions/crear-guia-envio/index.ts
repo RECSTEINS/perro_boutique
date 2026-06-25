@@ -2,7 +2,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { calcularPesoKg } from "../_shared/enviosperros.ts";
-import { ORIGEN_TIENDA } from "../_shared/tienda";
+import { ORIGEN_TIENDA } from "../_shared/tienda.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
