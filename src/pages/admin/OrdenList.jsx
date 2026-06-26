@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Box, Flex, Heading, Text, Stack, HStack, Spinner, Input, NativeSelect, Badge, Table, Image, Circle, Button } from "@chakra-ui/react";
-import { FiX, FiCheck, FiTruck } from 'react-icons/fi';
+import { FiX, FiCheck, FiTruck, FiDollarSign, FiRefreshCw } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { supabase } from '../../lib/supabase';
 import { formatPrice, formatDate } from '../../utils/format';
@@ -548,6 +548,10 @@ function OrdersList(){
     const [filtroMetodo, setFiltroMetodo] = useState('');
     const [busqueda, setBusqueda] = useState('');
 
+    const [saldo, setSaldo] = useState(null);
+    const [cargandoSaldo, setCargandoSaldo] = useState(false);
+    const [errorSaldo, setErrorSaldo] = useState(false);
+
     useEffect(() => {
         let mounted = true;
 
@@ -599,6 +603,26 @@ function OrdersList(){
         );
     }
 
+    async function consultarSaldo(){
+        setCargandoSaldo(true);
+        setErrorSaldo(false);
+
+        const {data, error} = await supabase.functions.invoke('consultar-saldo');
+
+        setCargandoSaldo(false);
+
+        if(error || !data || typeof data.balance !== 'number'){
+            setErrorSaldo(true);
+            setSaldo(null);
+            return;
+        }
+        setSaldo(data.balance);
+    }
+    
+    useEffect(() => {
+        consultarSaldo();
+    }, []);
+
     const pedidosFiltrados = useMemo(() => {
         const q = busqueda.trim().toLowerCase();
         return orders.filter((o) => {
@@ -626,7 +650,8 @@ function OrdersList(){
 
     return(
         <Box p={{base: 4, md: 8}}>
-            <Stack gap={1} mb={6}>
+            <Flex justify="space-between" align="flex-start" mb={6} gap={4} flexWrap="wrap">
+                <Stack gap={1}>
                 <Heading fontFamily="heading" color="brand.purple">
                     Pedidos                    
                 </Heading>
@@ -637,6 +662,48 @@ function OrdersList(){
                     }
                 </Text>
             </Stack>
+            <Box
+                bg={errorSaldo ? 'orange.50' : 'brand.cream'}
+                border="1px solid"
+                borderColor={errorSaldo ? 'orange.200' : 'brand.purpleLight'}
+                borderRadius="16px"
+                px={5}
+                py={4}
+                mb={6}
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+            >
+                <HStack gap={3}>
+                    <Circle size="40px" bg="brand.purpleLight">
+                        <Box as={FiDollarSign} boxSize="20px" color="brand.purple"/>
+                    </Circle>
+                    <Stack gap={0}>
+                        <Text fontSize="11px" fontWeight="700" color="brand.purpleSoft" letterSpacing="0.5px" textTransform="uppercase">
+                            Saldo Envíosperros
+                        </Text>
+                        {cargandoSaldo ? (
+                            <Spinner size="sm" color="brand.purple"/>
+                        ) : (
+                            <Text fontSize="22px" fontWeight="600" color="brand.purple">
+                                {formatPrice(Math.round((saldo || 0) * 100))}
+                            </Text>
+                        )}
+                    </Stack>
+                </HStack>
+                <Button
+                    size="sm"
+                    variant="outline"
+                    borderColor="brand.purpleLight"
+                    color="brand.purple"
+                    borderRadius="pill"
+                    onClick={consultarSaldo}
+                    loading={cargandoSaldo}
+                >
+                    <Box as={FiRefreshCw} boxSize="16px"/>
+                </Button>
+            </Box>
+            </Flex>
 
             <HStack gap={3} mb={5} flexWrap="wrap" align={'flex-end'}>
                 <NativeSelect.Root size="sm" maxW="200px">
